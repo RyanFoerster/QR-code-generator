@@ -84,19 +84,18 @@
           <!-- Communication -->
           <div class="group">
             <label for="communication" class="block text-sm font-semibold text-gray-300 mb-3">
-              Communication / Référence *
+              Communication / Référence
             </label>
             <textarea
               id="communication"
               name="communication"
-              placeholder="Description du paiement (obligatoire)"
+              placeholder="Description du paiement (optionnel)"
               rows="3"
               class="w-full px-6 py-4 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 resize-none group-hover:border-purple-400"
-              required
               minlength="3"
               maxlength="140"
             ></textarea>
-            <p class="text-xs text-gray-400 mt-1">Entre 3 et 140 caractères</p>
+            <p class="text-xs text-gray-400 mt-1">Optionnel - Entre 3 et 140 caractères si renseigné</p>
           </div>
 
           <!-- Nom du bénéficiaire -->
@@ -161,86 +160,315 @@
             ✅ Valeurs par défaut sauvegardées !
           </div>
 
-          <!-- Section personnalisation couleurs -->
-          <div class="mt-8 p-4 sm:p-6 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl border border-indigo-500/30">
-            <h3 class="text-lg sm:text-xl font-bold text-white mb-4 flex items-center flex-wrap gap-2">
-              <svg class="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a4 4 0 004-4V5z"></path>
-              </svg>
-              <span>🎨 Personnalisation du QR Code</span>
-              <span class="text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 py-1 rounded-full animate-pulse">
-                ⚡ Temps réel
-              </span>
-            </h3>
-            
-            <div class="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
-              <!-- Couleur du QR Code -->
-              <div class="group">
-                <label for="qr-color" class="block text-sm font-semibold text-gray-300 mb-3">
-                  Couleur du QR Code
-                </label>
-                <div class="flex items-center gap-3">
-                  <input
-                    type="color"
-                    id="qr-color"
-                    name="qr-color"
-                    value="#000000"
-                    class="w-12 h-12 rounded-lg border-2 border-gray-600 cursor-pointer hover:border-purple-400 transition-colors flex-shrink-0"
-                  />
-                  <span id="qr-color-value" class="text-gray-300 font-mono text-sm">#000000</span>
+          <!-- Système d'onglets pour les fonctionnalités avancées -->
+          <div class="mt-8">
+            <!-- Navigation des onglets -->
+            <div class="flex flex-wrap gap-2 mb-6 p-1 bg-gray-800/50 rounded-xl border border-gray-700/50">
+              <button
+                type="button"
+                id="tab-colors"
+                class="tab-button active flex-1 min-w-0 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2"
+              >
+                <span class="text-base sm:text-lg">🎨</span>
+                <span class="hidden sm:inline">Couleurs</span>
+                <span class="sm:hidden">🎨</span>
+              </button>
+              
+              <button
+                type="button"
+                id="tab-creative"
+                class="tab-button hidden flex-1 min-w-0 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2"
+              >
+                <span class="text-base sm:text-lg">✨</span>
+                <span class="hidden sm:inline">Créativité</span>
+                <span class="sm:hidden">✨</span>
+              </button>
+              
+              <button
+                type="button"
+                id="tab-productivity"
+                class="tab-button flex-1 min-w-0 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2"
+              >
+                <span class="text-base sm:text-lg">⚡</span>
+                <span class="hidden sm:inline">Productivité</span>
+                <span class="sm:hidden">⚡</span>
+              </button>
+            </div>
+
+            <!-- Contenu des onglets -->
+            <div class="tab-content-container">
+              <!-- Onglet Couleurs -->
+              <div id="content-colors" class="tab-content active">
+                <div class="p-4 sm:p-6 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl border border-indigo-500/30">
+                  <h3 class="text-lg sm:text-xl font-bold text-white mb-4 flex items-center flex-wrap gap-2">
+                    <svg class="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a4 4 0 004-4V5z"></path>
+                    </svg>
+                    <span>🎨 Personnalisation des Couleurs</span>
+                  </h3>
+                  
+                  <div class="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
+                    <!-- Couleur du QR Code -->
+                    <div class="group">
+                      <label for="qr-color" class="block text-sm font-semibold text-gray-300 mb-3">
+                        Couleur du QR Code
+                      </label>
+                      <div class="flex items-center gap-3">
+                        <input
+                          type="color"
+                          id="qr-color"
+                          name="qr-color"
+                          value="#000000"
+                          class="w-12 h-12 rounded-lg border-2 border-gray-600 cursor-pointer hover:border-purple-400 transition-colors flex-shrink-0"
+                        />
+                        <span id="qr-color-value" class="text-gray-300 font-mono text-sm">#000000</span>
+                      </div>
+                    </div>
+
+                    <!-- Couleur du fond -->
+                    <div class="group">
+                      <label for="bg-color" class="block text-sm font-semibold text-gray-300 mb-3">
+                        Couleur du fond
+                      </label>
+                      <div class="flex items-center gap-3">
+                        <input
+                          type="color"
+                          id="bg-color"
+                          name="bg-color"
+                          value="#FFFFFF"
+                          class="w-12 h-12 rounded-lg border-2 border-gray-600 cursor-pointer hover:border-purple-400 transition-colors flex-shrink-0"
+                        />
+                        <span id="bg-color-value" class="text-gray-300 font-mono text-sm">#FFFFFF</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Option fond transparent -->
+                  <div class="mt-6">
+                    <label class="flex items-start sm:items-center cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        id="transparent-bg"
+                        name="transparent-bg"
+                        class="sr-only"
+                      />
+                      <div class="relative flex-shrink-0">
+                        <div class="w-6 h-6 bg-gray-600 rounded border-2 border-gray-500 group-hover:border-purple-400 transition-colors"></div>
+                        <div class="absolute inset-0 w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded opacity-0 transition-opacity duration-200" id="checkbox-bg"></div>
+                        <svg class="absolute inset-0 w-6 h-6 text-white opacity-0 transition-opacity duration-200" id="checkbox-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      <span class="ml-3 text-gray-300 font-medium group-hover:text-white transition-colors text-sm sm:text-base">
+                        🔍 Fond transparent (pour affiches)
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- Aperçu des couleurs -->
+                  <div class="mt-6 p-4 bg-gray-800/50 rounded-lg">
+                    <p class="text-xs text-gray-400 mb-3">Aperçu des couleurs :</p>
+                    <div class="flex items-center gap-4 flex-wrap">
+                      <div id="color-preview" class="w-16 h-16 rounded-lg border-2 border-gray-600 flex items-center justify-center text-xs font-bold flex-shrink-0" style="background-color: #FFFFFF; color: #000000;">
+                        QR
+                      </div>
+                      <div class="text-xs text-gray-400 space-y-1">
+                        <div>QR: <span id="preview-qr-color">#000000</span></div>
+                        <div>Fond: <span id="preview-bg-color">#FFFFFF</span></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Couleur du fond -->
-              <div class="group">
-                <label for="bg-color" class="block text-sm font-semibold text-gray-300 mb-3">
-                  Couleur du fond
-                </label>
-                <div class="flex items-center gap-3">
-                  <input
-                    type="color"
-                    id="bg-color"
-                    name="bg-color"
-                    value="#FFFFFF"
-                    class="w-12 h-12 rounded-lg border-2 border-gray-600 cursor-pointer hover:border-purple-400 transition-colors flex-shrink-0"
-                  />
-                  <span id="bg-color-value" class="text-gray-300 font-mono text-sm">#FFFFFF</span>
+              <!-- Onglet Créativité -->
+              <div id="content-creative" class="tab-content hidden" style="display: none;">
+                <div class="p-4 sm:p-6 bg-gradient-to-r from-pink-900/30 to-rose-900/30 rounded-xl border border-pink-500/30">
+                  <h3 class="text-lg sm:text-xl font-bold text-white mb-6 flex items-center flex-wrap gap-2">
+                    <svg class="w-5 h-5 text-pink-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <span>✨ Options Créatives</span>
+                  </h3>
+                  
+                  <div class="grid sm:grid-cols-2 gap-6">
+                    <!-- Style du QR Code -->
+                    <div class="group">
+                      <label for="qr-style" class="block text-sm font-semibold text-gray-300 mb-3">
+                        Style du QR Code
+                      </label>
+                      <div class="custom-select-wrapper">
+                        <select
+                          id="qr-style"
+                          name="qr-style"
+                          class="custom-select w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300 appearance-none cursor-pointer"
+                        >
+                          <option value="square">🔲 Carrés classiques</option>
+                          <option value="rounded">🔘 Carrés arrondis</option>
+                          <option value="dots">⚫ Points circulaires</option>
+                          <option value="hexagon">⬡ Hexagones</option>
+                        </select>
+                        <div class="custom-select-arrow">
+                          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                      <p class="text-xs text-amber-400 mt-1">⚠️ Styles avancés en développement</p>
+                    </div>
+
+                    <!-- Taille du QR Code -->
+                    <div class="group">
+                      <label for="qr-size" class="block text-sm font-semibold text-gray-300 mb-3">
+                        Taille d'export
+                      </label>
+                      <div class="custom-select-wrapper">
+                        <select
+                          id="qr-size"
+                          name="qr-size"
+                          class="custom-select w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300 appearance-none cursor-pointer"
+                        >
+                          <option value="150">📱 Petit - 150x150px</option>
+                          <option value="300" selected>💻 Standard - 300x300px</option>
+                          <option value="600">🖥️ Grand - 600x600px</option>
+                          <option value="1200">🖨️ Print HD - 1200x1200px</option>
+                        </select>
+                        <div class="custom-select-arrow">
+                          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Format d'export -->
+                    <div class="group">
+                      <label for="export-format" class="block text-sm font-semibold text-gray-300 mb-3">
+                        Format d'export
+                      </label>
+                      <div class="custom-select-wrapper">
+                        <select
+                          id="export-format"
+                          name="export-format"
+                          class="custom-select w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300 appearance-none cursor-pointer"
+                        >
+                          <option value="png" selected>🖼️ PNG (Recommandé)</option>
+                          <option value="svg">📐 SVG (Vectoriel)</option>
+                          <option value="jpeg">📷 JPEG (Photo)</option>
+                        </select>
+                        <div class="custom-select-arrow">
+                          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Niveau de correction d'erreur -->
+                    <div class="group">
+                      <label for="error-correction" class="block text-sm font-semibold text-gray-300 mb-3">
+                        Résistance aux dommages
+                      </label>
+                      <div class="custom-select-wrapper">
+                        <select
+                          id="error-correction"
+                          name="error-correction"
+                          class="custom-select w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300 appearance-none cursor-pointer"
+                        >
+                          <option value="L">🔴 Faible (7% récupération)</option>
+                          <option value="M" selected>🟡 Moyen (15% récupération)</option>
+                          <option value="Q">🟠 Élevé (25% récupération)</option>
+                          <option value="H">🟢 Maximum (30% récupération)</option>
+                        </select>
+                        <div class="custom-select-arrow">
+                          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                      <p class="text-xs text-gray-400 mt-1">Plus élevé = QR code plus résistant mais plus dense</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Option fond transparent -->
-            <div class="mt-6">
-              <label class="flex items-start sm:items-center cursor-pointer group">
-                <input
-                  type="checkbox"
-                  id="transparent-bg"
-                  name="transparent-bg"
-                  class="sr-only"
-                />
-                <div class="relative flex-shrink-0">
-                  <div class="w-6 h-6 bg-gray-600 rounded border-2 border-gray-500 group-hover:border-purple-400 transition-colors"></div>
-                  <div class="absolute inset-0 w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded opacity-0 transition-opacity duration-200" id="checkbox-bg"></div>
-                  <svg class="absolute inset-0 w-6 h-6 text-white opacity-0 transition-opacity duration-200" id="checkbox-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-                <span class="ml-3 text-gray-300 font-medium group-hover:text-white transition-colors text-sm sm:text-base">
-                  🔍 Fond transparent (pour affiches)
-                </span>
-              </label>
-            </div>
+              <!-- Onglet Productivité -->
+              <div id="content-productivity" class="tab-content hidden">
+                <div class="p-4 sm:p-6 bg-gradient-to-r from-emerald-900/30 to-teal-900/30 rounded-xl border border-emerald-500/30">
+                  <h3 class="text-lg sm:text-xl font-bold text-white mb-4 flex items-center flex-wrap gap-2">
+                    <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span>⚡ Productivité</span>
+                    <span class="text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2 py-1 rounded-full">
+                      🚀 Nouveau
+                    </span>
+                  </h3>
+                  
+                  <div class="space-y-6">
+                    <!-- Templates prédéfinis -->
+                    <div class="group">
+                      <label for="template-select" class="block text-sm font-semibold text-gray-300 mb-3">
+                        Templates prédéfinis
+                      </label>
+                      <select
+                        id="template-select"
+                        name="template-select"
+                        class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300"
+                      >
+                        <option value="">🎯 Sélectionner un template...</option>
+                        <option value="invoice">🧾 Facture (50€)</option>
+                        <option value="donation">💝 Donation (10€)</option>
+                        <option value="rent">🏠 Loyer (800€)</option>
+                        <option value="utilities">⚡ Facture énergie (120€)</option>
+                        <option value="subscription">📱 Abonnement (15€)</option>
+                        <option value="freelance">💼 Prestation freelance (250€)</option>
+                      </select>
+                    </div>
 
-            <!-- Aperçu des couleurs -->
-            <div class="mt-6 p-4 bg-gray-800/50 rounded-lg">
-              <p class="text-xs text-gray-400 mb-3">Aperçu des couleurs :</p>
-              <div class="flex items-center gap-4 flex-wrap">
-                <div id="color-preview" class="w-16 h-16 rounded-lg border-2 border-gray-600 flex items-center justify-center text-xs font-bold flex-shrink-0" style="background-color: #FFFFFF; color: #000000;">
-                  QR
-                </div>
-                <div class="text-xs text-gray-400 space-y-1">
-                  <div>QR: <span id="preview-qr-color">#000000</span></div>
-                  <div>Fond: <span id="preview-bg-color">#FFFFFF</span></div>
+                    <!-- Historique des QR codes -->
+                    <div class="group">
+                      <div class="flex items-center justify-between mb-3">
+                        <label class="block text-sm font-semibold text-gray-300">
+                          Historique récent
+                        </label>
+                        <button
+                          type="button"
+                          id="clear-history-btn"
+                          class="text-xs text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          🗑️ Vider
+                        </button>
+                      </div>
+                      <div id="history-container" class="space-y-2 max-h-32 overflow-y-auto">
+                        <p class="text-xs text-gray-500 italic">Aucun QR code généré récemment</p>
+                      </div>
+                    </div>
+
+                    <!-- Actions rapides -->
+                    <div class="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        id="export-settings-btn"
+                        class="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-sm"
+                      >
+                        <span>📤</span>
+                        <span>Exporter config</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        id="import-settings-btn"
+                        class="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-violet-700 transition-all duration-300 text-sm"
+                      >
+                        <span>📥</span>
+                        <span>Importer config</span>
+                      </button>
+                    </div>
+
+                    <!-- Input caché pour l'import -->
+                    <input type="file" id="import-file-input" accept=".json" class="hidden" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -427,6 +655,18 @@
     const checkboxBg = document.getElementById('checkbox-bg') as HTMLElement;
     const checkboxCheck = document.getElementById('checkbox-check') as HTMLElement;
 
+    // Nouveaux éléments pour les fonctionnalités avancées
+    const qrStyleSelect = document.getElementById('qr-style') as HTMLSelectElement;
+    const qrSizeSelect = document.getElementById('qr-size') as HTMLSelectElement;
+    const exportFormatSelect = document.getElementById('export-format') as HTMLSelectElement;
+    const errorCorrectionSelect = document.getElementById('error-correction') as HTMLSelectElement;
+    const templateSelect = document.getElementById('template-select') as HTMLSelectElement;
+    const historyContainer = document.getElementById('history-container') as HTMLElement;
+    const clearHistoryBtn = document.getElementById('clear-history-btn') as HTMLButtonElement;
+    const exportSettingsBtn = document.getElementById('export-settings-btn') as HTMLButtonElement;
+    const importSettingsBtn = document.getElementById('import-settings-btn') as HTMLButtonElement;
+    const importFileInput = document.getElementById('import-file-input') as HTMLInputElement;
+
     if (!form) {
       console.error('Formulaire non trouvé');
       return;
@@ -435,6 +675,10 @@
     // Charger les valeurs par défaut au démarrage
     loadDefaults();
     setupColorHandlers();
+    setupAdvancedFeatures();
+    // setupCreativeHandlers(); // Désactivé temporairement
+    setupTabs();
+    loadHistory();
 
     // Fonction pour charger les valeurs par défaut
     function loadDefaults() {
@@ -456,6 +700,226 @@
         }
       } catch (error) {
         console.error('Erreur lors du chargement des valeurs par défaut:', error);
+      }
+    }
+
+    // Fonction pour configurer les fonctionnalités avancées
+    function setupAdvancedFeatures() {
+      // Templates prédéfinis
+      const templates = {
+        invoice: {
+          amount: '50.00',
+          communication: 'Facture #2024-001 - Services professionnels',
+          beneficiary: 'Entreprise Services Pro'
+        },
+        donation: {
+          amount: '10.00',
+          communication: 'Don pour association caritative',
+          beneficiary: 'Association Aide Humanitaire'
+        },
+        rent: {
+          amount: '800.00',
+          communication: 'Loyer mensuel - Appartement Rue de la Paix',
+          beneficiary: 'Agence Immobilière Central'
+        },
+        utilities: {
+          amount: '120.00',
+          communication: 'Facture électricité/gaz - Période janvier 2024',
+          beneficiary: 'Fournisseur Énergie Plus'
+        },
+        subscription: {
+          amount: '15.00',
+          communication: 'Abonnement mensuel - Service Premium',
+          beneficiary: 'Plateforme Digitale'
+        },
+        freelance: {
+          amount: '250.00',
+          communication: 'Prestation développement web - Projet XYZ',
+          beneficiary: 'Freelance Développeur'
+        }
+      };
+
+      // Gestionnaire de templates
+      templateSelect?.addEventListener('change', (e) => {
+        const templateKey = (e.target as HTMLSelectElement).value;
+        if (templateKey && templates[templateKey as keyof typeof templates]) {
+          const template = templates[templateKey as keyof typeof templates];
+          
+          if (amountInput) amountInput.value = template.amount;
+          if (communicationInput) communicationInput.value = template.communication;
+          if (beneficiaryInput) beneficiaryInput.value = template.beneficiary;
+          
+          // Animation de remplissage
+          animateElement(form, [
+            { transform: 'scale(1)' },
+            { transform: 'scale(1.02)' },
+            { transform: 'scale(1)' }
+          ], {
+            duration: 300
+          });
+          
+          console.log('Template appliqué:', templateKey);
+        }
+      });
+
+      // Export des paramètres
+      exportSettingsBtn?.addEventListener('click', () => {
+        try {
+          const settings = {
+            qrColor: qrColorInput?.value || '#000000',
+            bgColor: bgColorInput?.value || '#FFFFFF',
+            transparent: transparentBgInput?.checked || false,
+            style: qrStyleSelect?.value || 'square',
+            size: qrSizeSelect?.value || '300',
+            format: exportFormatSelect?.value || 'png',
+            errorCorrection: errorCorrectionSelect?.value || 'M',
+            exportDate: new Date().toISOString()
+          };
+          
+          const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `qr-generator-config-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          console.log('Configuration exportée');
+        } catch (error) {
+          console.error('Erreur lors de l\'export:', error);
+          alert('Erreur lors de l\'export de la configuration');
+        }
+      });
+
+      // Import des paramètres
+      importSettingsBtn?.addEventListener('click', () => {
+        importFileInput?.click();
+      });
+
+      importFileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const settings = JSON.parse(event.target?.result as string);
+              
+              // Appliquer les paramètres
+              if (qrColorInput && settings.qrColor) qrColorInput.value = settings.qrColor;
+              if (bgColorInput && settings.bgColor) bgColorInput.value = settings.bgColor;
+              if (transparentBgInput && typeof settings.transparent === 'boolean') transparentBgInput.checked = settings.transparent;
+              if (qrStyleSelect && settings.style) qrStyleSelect.value = settings.style;
+              if (qrSizeSelect && settings.size) qrSizeSelect.value = settings.size;
+              if (exportFormatSelect && settings.format) exportFormatSelect.value = settings.format;
+              if (errorCorrectionSelect && settings.errorCorrection) errorCorrectionSelect.value = settings.errorCorrection;
+              
+              // Mettre à jour l'aperçu
+              updateColorPreview();
+              
+              console.log('Configuration importée');
+              alert('Configuration importée avec succès !');
+            } catch (error) {
+              console.error('Erreur lors de l\'import:', error);
+              alert('Erreur lors de l\'import de la configuration');
+            }
+          };
+          reader.readAsText(file);
+        }
+      });
+
+      // Vider l'historique
+      clearHistoryBtn?.addEventListener('click', () => {
+        if (confirm('Êtes-vous sûr de vouloir vider l\'historique ?')) {
+          localStorage.removeItem('qr-payment-history');
+          loadHistory();
+          console.log('Historique vidé');
+        }
+      });
+    }
+
+    // Fonction pour charger l'historique
+    function loadHistory() {
+      try {
+        const history = JSON.parse(localStorage.getItem('qr-payment-history') || '[]');
+        
+        if (historyContainer) {
+          if (history.length === 0) {
+            historyContainer.innerHTML = '<p class="text-xs text-gray-500 italic">Aucun QR code généré récemment</p>';
+          } else {
+            historyContainer.innerHTML = history.slice(0, 5).map((item: any, index: number) => `
+              <div class="flex items-center justify-between p-2 bg-gray-800/30 rounded-lg cursor-pointer hover:bg-gray-700/30 transition-colors" data-history-index="${index}">
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-white font-medium truncate">${item.amount}€ - ${item.communication}</p>
+                  <p class="text-xs text-gray-400">${new Date(item.date).toLocaleDateString()}</p>
+                </div>
+                <button class="text-xs text-emerald-400 hover:text-emerald-300 ml-2 flex-shrink-0">
+                  📋 Utiliser
+                </button>
+              </div>
+            `).join('');
+            
+            // Ajouter les gestionnaires d'événements pour l'historique
+            historyContainer.querySelectorAll('[data-history-index]').forEach((item, index) => {
+              item.addEventListener('click', () => {
+                const historyItem = history[index];
+                if (historyItem) {
+                  if (amountInput) amountInput.value = historyItem.amount;
+                  if (communicationInput) communicationInput.value = historyItem.communication;
+                  if (beneficiaryInput) beneficiaryInput.value = historyItem.beneficiary;
+                  
+                  // Animation
+                  animateElement(form, [
+                    { transform: 'scale(1)' },
+                    { transform: 'scale(1.02)' },
+                    { transform: 'scale(1)' }
+                  ], {
+                    duration: 300
+                  });
+                  
+                  console.log('Historique appliqué:', historyItem);
+                }
+              });
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement de l\'historique:', error);
+      }
+    }
+
+    // Fonction pour ajouter à l'historique
+    function addToHistory(iban: string, amount: string, communication: string, beneficiary: string) {
+      try {
+        const history = JSON.parse(localStorage.getItem('qr-payment-history') || '[]');
+        const newItem = {
+          iban,
+          amount,
+          communication,
+          beneficiary,
+          date: new Date().toISOString()
+        };
+        
+        // Éviter les doublons
+        const exists = history.some((item: any) => 
+          item.iban === iban && 
+          item.amount === amount && 
+          item.communication === communication
+        );
+        
+        if (!exists) {
+          history.unshift(newItem);
+          // Garder seulement les 10 derniers
+          if (history.length > 10) {
+            history.splice(10);
+          }
+          
+          localStorage.setItem('qr-payment-history', JSON.stringify(history));
+          loadHistory();
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout à l\'historique:', error);
       }
     }
 
@@ -557,6 +1021,33 @@
         
         updateColorPreview();
         updateQRCodeColors(); // Régénération avec nouvelles couleurs
+      });
+    }
+
+    // Fonction pour configurer les gestionnaires des options créatives
+    function setupCreativeHandlers() {
+      // Gestionnaire pour le style du QR code
+      qrStyleSelect?.addEventListener('change', () => {
+        console.log('Style QR code changé:', qrStyleSelect.value);
+        updateQRCodeColors(); // Régénération avec nouveau style
+      });
+
+      // Gestionnaire pour la taille du QR code
+      qrSizeSelect?.addEventListener('change', () => {
+        console.log('Taille QR code changée:', qrSizeSelect.value);
+        updateQRCodeColors(); // Régénération avec nouvelle taille
+      });
+
+      // Gestionnaire pour le format d'export
+      exportFormatSelect?.addEventListener('change', () => {
+        console.log('Format d\'export changé:', exportFormatSelect.value);
+        updateQRCodeColors(); // Régénération avec nouveau format
+      });
+
+      // Gestionnaire pour le niveau de correction d'erreur
+      errorCorrectionSelect?.addEventListener('change', () => {
+        console.log('Niveau de correction changé:', errorCorrectionSelect.value);
+        updateQRCodeColors(); // Régénération avec nouveau niveau
       });
     }
 
@@ -694,7 +1185,7 @@ ${communication || ''}`;
       console.log('Données:', { iban, amount, communication, beneficiary }); // Debug
 
       // Validation des champs obligatoires
-      if (!iban || !amount || !communication) {
+      if (!iban || !amount) {
         animateElement(form, [
           { transform: 'translateX(0)' },
           { transform: 'translateX(-10px)' },
@@ -703,7 +1194,7 @@ ${communication || ''}`;
         ], {
           duration: 400
         });
-        alert('Veuillez remplir tous les champs obligatoires');
+        alert('Veuillez remplir tous les champs obligatoires (IBAN et montant)');
         return;
       }
 
@@ -753,8 +1244,8 @@ ${communication || ''}`;
         return;
       }
 
-      // Validation de la communication
-      if (communication.length < 3 || communication.length > 140) {
+      // Validation de la communication (optionnelle)
+      if (communication && (communication.length < 3 || communication.length > 140)) {
         animateElement(form, [
           { transform: 'translateX(0)' },
           { transform: 'translateX(-10px)' },
@@ -763,7 +1254,7 @@ ${communication || ''}`;
         ], {
           duration: 400
         });
-        alert('La communication doit contenir entre 3 et 140 caractères');
+        alert('La communication doit contenir entre 3 et 140 caractères si elle est renseignée');
         return;
       }
 
@@ -857,6 +1348,9 @@ ${communication || ''}`;
           displayBeneficiaryContainer.classList.add('hidden');
         }
 
+        // Ajouter à l'historique
+        addToHistory(iban, amount, communication, beneficiary);
+
       } catch (error) {
         console.error('Erreur lors de la génération du QR code:', error);
         alert('Erreur lors de la génération du QR code');
@@ -882,7 +1376,7 @@ ${communication || ''}`;
         const communication = formData.get('communication') as string;
         const beneficiary = formData.get('beneficiary') as string;
         
-        if (iban && amount && communication) {
+        if (iban && amount) {
           const ibanClean = iban.replace(/\s/g, '');
           const qrData = `BCD
 002
@@ -1103,13 +1597,28 @@ ${communication || ''}`;
       const qrColor = (qrColorInput?.value || '#000000').replace('#', '');
       const isTransparent = transparentBgInput?.checked || false;
       const bgColor = isTransparent ? '' : (bgColorInput?.value || '#FFFFFF').replace('#', '');
+      const selectedSize = qrSizeSelect?.value || size.toString();
+      const errorCorrection = errorCorrectionSelect?.value || 'M';
+      const exportFormat = exportFormatSelect?.value || 'png';
+      const qrStyle = qrStyleSelect?.value || 'square';
       const encodedText = encodeURIComponent(text);
       
-      console.log('Génération QR Code avec:', { qrColor, isTransparent, bgColor });
+      console.log('Génération QR Code avec:', { 
+        qrColor, 
+        isTransparent, 
+        bgColor, 
+        size: selectedSize, 
+        errorCorrection, 
+        format: exportFormat,
+        style: qrStyle
+      });
+      
+      // Note: L'API QR Server ne supporte pas tous les styles personnalisés
+      // mais nous utilisons les paramètres disponibles (taille, couleur, format, correction)
       
       if (isTransparent) {
         // Pour le fond transparent, générer d'abord avec fond blanc puis traiter
-        const baseUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}&format=png&margin=10&color=000000&bgcolor=FFFFFF`;
+        const baseUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${selectedSize}x${selectedSize}&data=${encodedText}&format=png&margin=10&color=000000&bgcolor=FFFFFF&ecc=${errorCorrection}`;
         console.log('URL de base pour transparence:', baseUrl);
         
         try {
@@ -1119,15 +1628,61 @@ ${communication || ''}`;
         } catch (error) {
           console.error('Erreur lors de la création de la transparence:', error);
           // Fallback : retourner l'URL de base avec les couleurs demandées
-          const fallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}&format=png&margin=10&color=${qrColor}&bgcolor=${bgColor || 'FFFFFF'}`;
+          const fallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${selectedSize}x${selectedSize}&data=${encodedText}&format=${exportFormat}&margin=10&color=${qrColor}&bgcolor=${bgColor || 'FFFFFF'}&ecc=${errorCorrection}`;
           return fallbackUrl;
         }
       } else {
         // Fond coloré normal
-        const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}&format=png&margin=10&color=${qrColor}&bgcolor=${bgColor}`;
+        const url = `https://api.qrserver.com/v1/create-qr-code/?size=${selectedSize}x${selectedSize}&data=${encodedText}&format=${exportFormat}&margin=10&color=${qrColor}&bgcolor=${bgColor}&ecc=${errorCorrection}`;
         console.log('URL QR Code avec fond coloré:', url);
         return url;
       }
+    }
+
+    // Fonction pour configurer les onglets
+    function setupTabs() {
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const targetTab = button.id.replace('tab-', 'content-');
+          
+          // Désactiver tous les onglets
+          tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.add('text-gray-400', 'hover:text-white');
+            btn.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'text-white', 'shadow-lg');
+          });
+          
+          tabContents.forEach(content => {
+            content.classList.remove('active');
+            content.classList.add('hidden');
+          });
+          
+          // Activer l'onglet sélectionné
+          button.classList.add('active');
+          button.classList.remove('text-gray-400', 'hover:text-white');
+          button.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'text-white', 'shadow-lg');
+          
+          const targetContent = document.getElementById(targetTab);
+          if (targetContent) {
+            targetContent.classList.add('active');
+            targetContent.classList.remove('hidden');
+            
+            // Animation d'apparition
+            animateElement(targetContent, [
+              { opacity: 0, transform: 'translateY(10px)' },
+              { opacity: 1, transform: 'translateY(0px)' }
+            ], {
+              duration: 300,
+              easing: 'ease-out'
+            });
+          }
+          
+          console.log('Onglet activé:', targetTab);
+        });
+      });
     }
   });
 </script>
@@ -1316,5 +1871,132 @@ ${communication || ''}`;
     .gap-3 {
       gap: 0.5rem;
     }
+  }
+
+  /* Styles pour les onglets */
+  .tab-button {
+    background: rgba(55, 65, 81, 0.5);
+    color: rgb(156, 163, 175);
+    border: 1px solid rgba(75, 85, 99, 0.5);
+  }
+
+  .tab-button:hover {
+    color: white;
+    background: rgba(75, 85, 99, 0.7);
+  }
+
+  .tab-button.active {
+    background: linear-gradient(to right, rgb(147, 51, 234), rgb(219, 39, 119));
+    color: white;
+    border: 1px solid rgba(147, 51, 234, 0.5);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .tab-content {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-out;
+  }
+
+  .tab-content.hidden {
+    display: none;
+  }
+
+  /* Styles pour les selects personnalisés */
+  .custom-select-wrapper {
+    position: relative;
+  }
+
+  .custom-select {
+    background-image: none;
+    padding-right: 3rem;
+  }
+
+  .custom-select:focus {
+    outline: none;
+  }
+
+  .custom-select-arrow {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    transition: transform 0.2s ease;
+  }
+
+  .custom-select:focus + .custom-select-arrow {
+    transform: translateY(-50%) rotate(180deg);
+  }
+
+  .custom-select option {
+    background: rgb(55, 65, 81);
+    color: white;
+    padding: 0.5rem;
+  }
+
+  .custom-select option:hover {
+    background: rgb(75, 85, 99);
+  }
+
+  /* Scrollbar personnalisée pour l'historique */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.5) rgba(55, 65, 81, 0.3);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(55, 65, 81, 0.3);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.5);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.7);
+  }
+
+  /* Animation pour les éléments de l'historique */
+  .history-item {
+    transition: all 0.2s ease;
+  }
+
+  .history-item:hover {
+    transform: translateX(4px);
+    background: rgba(75, 85, 99, 0.5) !important;
+  }
+
+  /* Responsive pour les onglets */
+  @media (max-width: 640px) {
+    .tab-button {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.75rem;
+    }
+    
+    .tab-button span:not(.sm\\:hidden) {
+      display: none;
+    }
+    
+    .tab-button .sm\\:hidden {
+      display: inline !important;
+    }
+  }
+
+  /* Amélioration des focus states pour l'accessibilité */
+  .tab-button:focus-visible {
+    outline: 2px solid rgb(139, 92, 246);
+    outline-offset: 2px;
+  }
+
+  .custom-select:focus-visible {
+    outline: 2px solid rgb(139, 92, 246);
+    outline-offset: 2px;
   }
 </style> 
