@@ -1,0 +1,91 @@
+---
+import { supabase } from "../../lib/supabase";
+
+const { searchParams } = Astro.url;
+const token_hash = searchParams.get('token_hash');
+const type = searchParams.get('type');
+
+let error = '';
+let success = false;
+
+if (token_hash && type) {
+  try {
+    const { data, error: confirmError } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as any
+    });
+
+    if (confirmError) {
+      error = confirmError.message;
+    } else {
+      success = true;
+      // Rediriger vers le dashboard après 3 secondes
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          window.location.href = '/auth/signin';
+        }, 3000);
+      }
+    }
+  } catch (e) {
+    error = 'Erreur lors de la confirmation';
+  }
+} else {
+  error = 'Lien de confirmation invalide';
+}
+---
+
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Confirmation Email - Wipay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+  <div class="max-w-md mx-auto text-center p-8">
+    {success ? (
+      <div class="bg-green-900/50 border border-green-500/30 rounded-lg p-6">
+        <div class="w-16 h-16 bg-green-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-green-400 mb-2">Email confirmé !</h1>
+        <p class="text-green-300 mb-4">
+          Votre compte a été confirmé avec succès.
+        </p>
+        <p class="text-sm text-gray-400">
+          Redirection vers le dashboard dans 3 secondes...
+        </p>
+        <a href="/dashboard" class="inline-block mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+          Aller au Dashboard
+        </a>
+      </div>
+    ) : (
+      <div class="bg-red-900/50 border border-red-500/30 rounded-lg p-6">
+        <div class="w-16 h-16 bg-red-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-red-400 mb-2">Erreur de confirmation</h1>
+        <p class="text-red-300 mb-4">
+          {error || 'Une erreur est survenue lors de la confirmation.'}
+        </p>
+        <a href="/auth/signin" class="inline-block bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+          Retour à la connexion
+        </a>
+      </div>
+    )}
+  </div>
+
+  {success && (
+    <script>
+      // Redirection automatique après 3 secondes
+      setTimeout(() => {
+        window.location.href = '/auth/signin';
+      }, 3000);
+    </script>
+  )}
+</body>
+</html> 

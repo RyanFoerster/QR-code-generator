@@ -1,6 +1,50 @@
 ---
 // Le QR code sera généré côté client avec JavaScript
+import Header from './Header.astro';
+import { canUserCreateQR } from '../lib/supabase';
+
+const { user, userProfile } = Astro.locals;
+
+// Vérifier si l'utilisateur peut créer un QR code
+let canCreate = true;
+let limitMessage = '';
+
+if (user && userProfile) {
+  try {
+    canCreate = await canUserCreateQR(user.id);
+    if (!canCreate) {
+      if (userProfile.current_plan_type === 'credits') {
+        limitMessage = `Vous n'avez plus de crédits disponibles. Achetez des crédits ou passez au plan Premium pour un accès illimité.`;
+      } else if (userProfile.current_plan_type === 'none') {
+        limitMessage = `Vous n'avez pas de plan actif. Achetez des crédits ou souscrivez au plan Premium.`;
+      } else {
+        limitMessage = `Limite mensuelle atteinte (${userProfile.qr_codes_used_this_month} QR codes). Votre limite se réinitialisera le mois prochain.`;
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification des limites:', error);
+  }
+}
 ---
+
+<!-- Header avec informations utilisateur -->
+<Header />
+
+<!-- Script pour passer les informations utilisateur au JavaScript -->
+<script define:vars={{ 
+  userId: user?.id, 
+  userPlanType: userProfile?.current_plan_type,
+  usedCount: userProfile?.qr_codes_used_this_month,
+  availableCredits: userProfile?.available_credits
+}}>
+  // Ajouter les informations utilisateur au body pour que le JavaScript puisse y accéder
+  if (userId) {
+    document.body.setAttribute('data-user-id', userId);
+    document.body.setAttribute('data-user-plan-type', userPlanType || 'none');
+    document.body.setAttribute('data-used-count', (usedCount || 0).toString());
+    document.body.setAttribute('data-available-credits', (availableCredits || 0).toString());
+  }
+</script>
 
 <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
   <!-- Header avec animation -->
@@ -11,12 +55,32 @@
       </svg>
     </div>
     <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent mb-3 sm:mb-4">
-      Générateur QR Code
+      Wipay
     </h1>
     <p class="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto px-4">
       Créez des QR codes élégants pour vos paiements bancaires instantanés
     </p>
   </div>
+
+  <!-- Alerte de limite si nécessaire -->
+  {!canCreate && (
+    <div class="max-w-7xl mx-auto mb-6 p-4 bg-red-900/50 border border-red-500/50 rounded-xl text-red-200">
+      <div class="flex items-center">
+        <svg class="w-5 h-5 text-red-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+        <div>
+          <h3 class="font-semibold">Limite atteinte</h3>
+          <p class="text-sm mt-1">{limitMessage}</p>
+          {userProfile?.subscription_status !== 'active' && (
+            <a href="/pricing" class="inline-block mt-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+              Voir les plans
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  )}
 
   <div class="grid xl:grid-cols-2 gap-6 lg:gap-12">
     <!-- Formulaire de saisie -->
@@ -121,13 +185,20 @@
 
           <button
             type="submit"
-            class="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl font-bold text-base sm:text-lg hover:from-purple-700 hover:via-pink-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 relative overflow-hidden group"
+            class={`w-full py-3 sm:py-4 px-6 sm:px-8 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-2xl relative overflow-hidden group ${
+              canCreate 
+                ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white hover:from-purple-700 hover:via-pink-700 hover:to-indigo-700 transform hover:scale-105 hover:shadow-purple-500/25' 
+                : 'bg-gray-600 text-gray-300 cursor-not-allowed opacity-50'
+            }`}
+            disabled={!canCreate}
           >
             <span class="relative z-10 flex items-center justify-center gap-2">
-              <span>Générer le QR Code</span>
-              <span>✨</span>
+              <span>{canCreate ? 'Générer le QR Code' : 'Limite atteinte'}</span>
+              <span>{canCreate ? '✨' : '🚫'}</span>
             </span>
-            <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {canCreate && (
+              <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            )}
           </button>
 
           <!-- Boutons d'actions -->
@@ -543,7 +614,44 @@
           </button>
         </div>
 
-        <div id="placeholder" class="text-center animate-pulse">
+        <!-- Prévisualisation du QR code -->
+        <div id="qr-preview" class="text-center">
+          <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/20">
+            <h3 class="text-xl sm:text-2xl font-bold text-white mb-4 lg:mb-6 flex items-center justify-center gap-2 flex-wrap">
+              <span class="text-xl sm:text-2xl">👁️</span>
+              <span>Aperçu du QR Code</span>
+              <span class="text-xs bg-blue-500/30 text-blue-200 px-2 py-1 rounded-full border border-blue-400/30">
+                🎨 Prévisualisation
+              </span>
+            </h3>
+            
+            <!-- Container du QR code factice avec gestion du fond transparent -->
+            <div id="preview-qr-container" class="inline-block p-3 sm:p-4 rounded-xl mx-auto" style="background-color: #FFFFFF;">
+              <!-- QR Code factice généré en SVG -->
+              <div id="preview-qr-code" class="w-48 h-48 sm:w-56 sm:h-56 mx-auto">
+                <!-- Le QR code factice sera généré ici -->
+              </div>
+            </div>
+            
+            <p class="text-purple-200 mt-3 sm:mt-4 text-sm">
+              🎨 Aperçu avec vos couleurs personnalisées
+            </p>
+            
+            <!-- Informations de style -->
+            <div class="mt-4 p-3 bg-gray-700/30 rounded-lg text-xs">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-gray-300">Couleur QR :</span>
+                <span id="preview-color-info" class="font-mono text-white">#000000</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-300">Fond :</span>
+                <span id="preview-bg-info" class="font-mono text-white">#FFFFFF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="placeholder" class="text-center animate-pulse hidden">
           <div class="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full mx-auto mb-4 sm:mb-6 flex items-center justify-center float-animation">
             <svg class="w-12 h-12 sm:w-16 sm:h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
@@ -562,6 +670,9 @@
 </div>
 
 <script>
+  // Vérifier si l'utilisateur peut créer des QR codes
+  const canCreateQR = document.querySelector('button[type="submit"]')?.hasAttribute('disabled') === false;
+
   // Fonction d'animation personnalisée (remplace animatejs)
   function animateElement(element: Element | string, keyframes: any, options: any = {}) {
     const el = typeof element === 'string' ? document.querySelector(element) : element;
@@ -679,6 +790,9 @@
     // setupCreativeHandlers(); // Désactivé temporairement
     setupTabs();
     loadHistory();
+    
+    // Initialiser la prévisualisation du QR code
+    updateQRPreview();
 
     // Fonction pour charger les valeurs par défaut
     function loadDefaults() {
@@ -780,7 +894,7 @@
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `qr-generator-config-${new Date().toISOString().slice(0, 10)}.json`;
+          link.download = `wipay-config-${new Date().toISOString().slice(0, 10)}.json`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -923,6 +1037,336 @@
       }
     }
 
+    // Fonction pour incrémenter l'utilisation des QR codes
+    async function incrementQRUsage() {
+      try {
+        // Récupérer l'ID utilisateur depuis l'attribut data
+        const userId = document.body.getAttribute('data-user-id');
+        
+        if (!userId || userId === 'null') {
+          console.error('ID utilisateur non disponible');
+          return;
+        }
+
+        console.log('Incrémentation usage QR pour:', userId);
+
+        const response = await fetch('/api/increment-qr-usage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log('Compteur mis à jour:', result.data);
+          
+          // Mettre à jour l'affichage local si nécessaire
+          updateLocalUsageDisplay(result.data);
+          
+          // Vérifier si l'utilisateur a atteint sa limite
+          if (result.data.hasReachedLimit) {
+            console.log('Limite atteinte après cette génération');
+            // Optionnel : afficher un message ou désactiver le formulaire
+            showLimitReachedMessage(result.data);
+          }
+        } else {
+          console.error('Erreur lors de l\'incrémentation:', result.message);
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'appel API increment-qr-usage:', error);
+      }
+    }
+
+    // Fonction pour mettre à jour l'affichage local de l'utilisation
+    function updateLocalUsageDisplay(data: any) {
+      // Mettre à jour le header si il existe
+      const usageDisplay = document.querySelector('[data-usage-display]');
+      if (usageDisplay) {
+        const limitText = data.qr_codes_limit === -1 ? '∞' : data.qr_codes_limit;
+        usageDisplay.textContent = `${data.qr_codes_used_this_month}/${limitText} QR`;
+      }
+      
+      // Mettre à jour les statistiques utilisateur si elles existent
+      if ((window as any).userStats) {
+        (window as any).userStats.qr_codes_used_this_month = data.qr_codes_used_this_month;
+        (window as any).userStats.available_credits = data.available_credits;
+      }
+    }
+
+    // Fonction pour afficher la confirmation avant génération
+    async function showGenerationConfirmation() {
+      return new Promise(async (resolve) => {
+        // Récupérer les statistiques en temps réel depuis la base de données
+        let currentStats;
+        try {
+          const userId = window.currentUserId;
+          if (!userId) {
+            console.error('ID utilisateur non disponible');
+            resolve(false);
+            return;
+          }
+
+          // Récupérer les vraies statistiques depuis Supabase
+          const response = await fetch('/api/get-user-stats', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            currentStats = result.data;
+          } else {
+            console.error('Erreur lors de la récupération des stats');
+            currentStats = window.userStats; // Fallback
+          }
+        } catch (error) {
+          console.error('Erreur lors de la récupération des stats:', error);
+          currentStats = window.userStats; // Fallback
+        }
+
+        if (!currentStats) {
+          console.error('Aucune statistique disponible');
+          resolve(false);
+          return;
+        }
+        
+        // Créer la modal de confirmation
+        const modal = document.createElement('div');
+        modal.id = 'generation-confirmation-modal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm';
+        
+        let warningMessage = '';
+        let warningIcon = '⚠️';
+        let warningColor = 'text-yellow-400';
+        let canProceed = true;
+        
+        if (currentStats.current_plan_type === 'credits') {
+          if (currentStats.available_credits <= 0) {
+            warningMessage = 'Attention : Vous n\'avez plus de crédits disponibles. Achetez des crédits ou passez au plan Premium pour un accès illimité.';
+            warningIcon = '🚨';
+            warningColor = 'text-red-400';
+            canProceed = false;
+          } else {
+            warningMessage = `Vous allez utiliser 1 crédit. Il vous restera ${currentStats.available_credits - 1} crédit(s) après cette génération.`;
+            warningIcon = '💳';
+            warningColor = 'text-blue-400';
+          }
+        } else if (currentStats.current_plan_type === 'premium') {
+          warningMessage = `Vous allez générer votre ${currentStats.qr_codes_used_this_month + 1}ème QR code ce mois-ci. Votre plan Premium vous donne un accès illimité.`;
+          warningIcon = '⭐';
+          warningColor = 'text-purple-400';
+        } else {
+          warningMessage = 'Attention : Vous n\'avez pas de plan actif. Achetez des crédits ou souscrivez au plan Premium.';
+          warningIcon = '🚨';
+          warningColor = 'text-red-400';
+          canProceed = false;
+        }
+        
+        modal.innerHTML = `
+          <div class="bg-gray-800/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 p-6 max-w-md mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+              <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-2xl">
+                ${warningIcon}
+              </div>
+              <h3 class="text-xl font-bold text-white mb-2">
+                ${canProceed ? 'Confirmer la génération' : 'Génération impossible'}
+              </h3>
+              <p class="text-sm ${warningColor} mb-4">
+                ${warningMessage}
+              </p>
+              
+              <div class="bg-gray-700/50 rounded-lg p-3 mb-4">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-gray-300">Plan actuel :</span>
+                  <span class="text-white font-medium">
+                    ${currentStats.current_plan_type === 'premium' ? '⭐ Premium' : 
+                      currentStats.current_plan_type === 'credits' ? '💳 Crédits' : '❌ Aucun plan'}
+                  </span>
+                </div>
+                ${currentStats.current_plan_type === 'credits' ? `
+                  <div class="flex justify-between items-center text-sm mt-1">
+                    <span class="text-gray-300">Crédits disponibles :</span>
+                    <span class="text-white font-medium">${currentStats.available_credits}</span>
+                  </div>
+                ` : currentStats.current_plan_type === 'premium' ? `
+                  <div class="flex justify-between items-center text-sm mt-1">
+                    <span class="text-gray-300">QR ce mois-ci :</span>
+                    <span class="text-white font-medium">${currentStats.qr_codes_used_this_month}/∞</span>
+                  </div>
+                ` : ''}
+              </div>
+              
+              ${!canProceed ? `
+                <div class="bg-blue-900/30 border border-blue-500/30 rounded-lg p-3 mb-4">
+                  <p class="text-xs text-blue-200">
+                    💡 <strong>Astuce :</strong> Consultez nos plans pour continuer à générer des QR codes !
+                  </p>
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="flex gap-3">
+              <button
+                id="cancel-generation"
+                class="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all duration-300"
+              >
+                ${canProceed ? '❌ Annuler' : '🔙 Retour'}
+              </button>
+              ${canProceed ? `
+                <button
+                  id="confirm-generation"
+                  class="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold transition-all duration-300"
+                >
+                  ✅ Générer
+                </button>
+              ` : `
+                <a
+                  href="/pricing"
+                  class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 text-center"
+                >
+                  💳 Voir les plans
+                </a>
+              `}
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Animation d'apparition
+        animateElement(modal, [
+          { opacity: 0, transform: 'scale(0.9)' },
+          { opacity: 1, transform: 'scale(1)' }
+        ], {
+          duration: 300
+        });
+        
+        // Gestionnaires d'événements
+        const cancelBtn = modal.querySelector('#cancel-generation');
+        const confirmBtn = modal.querySelector('#confirm-generation');
+        
+        const cleanup = () => {
+          animateElement(modal, [
+            { opacity: 1, transform: 'scale(1)' },
+            { opacity: 0, transform: 'scale(0.9)' }
+          ], {
+            duration: 200,
+            complete: () => {
+              modal.remove();
+            }
+          });
+        };
+        
+        cancelBtn?.addEventListener('click', () => {
+          cleanup();
+          resolve(false);
+        });
+        
+        if (confirmBtn) {
+          confirmBtn.addEventListener('click', () => {
+            cleanup();
+            resolve(true);
+          });
+        }
+        
+        // Fermer avec Escape
+        const handleEscape = (e) => {
+          if (e.key === 'Escape') {
+            cleanup();
+            resolve(false);
+            document.removeEventListener('keydown', handleEscape);
+          }
+        };
+        
+        document.addEventListener('keydown', handleEscape);
+        
+        // Fermer en cliquant sur le fond
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            cleanup();
+            resolve(false);
+          }
+        });
+      });
+    }
+
+    // Fonction pour afficher un message de limite atteinte
+    function showLimitReachedMessage(data: any) {
+      // Créer ou mettre à jour le message de limite
+      let limitAlert = document.getElementById('limit-reached-alert');
+      
+      if (!limitAlert) {
+        limitAlert = document.createElement('div');
+        limitAlert.id = 'limit-reached-alert';
+        limitAlert.className = 'fixed top-4 right-4 z-50 max-w-sm p-4 bg-red-900/90 border border-red-500/50 rounded-xl text-red-200 backdrop-blur-xl';
+        document.body.appendChild(limitAlert);
+      }
+
+      const message = data.current_plan_type === 'credits' 
+        ? 'Vous n\'avez plus de crédits disponibles ! Achetez des crédits ou passez au plan Premium pour un accès illimité.'
+        : `Limite mensuelle atteinte (${data.qr_codes_used_this_month} QR codes). Votre limite se réinitialisera le mois prochain.`;
+
+      limitAlert.innerHTML = `
+        <div class="flex items-start">
+          <svg class="w-5 h-5 text-red-400 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          <div class="flex-1">
+            <h3 class="font-semibold text-sm">Limite atteinte</h3>
+            <p class="text-xs mt-1">${message}</p>
+            ${data.current_plan_type === 'credits' ? '<a href="/pricing" class="inline-block mt-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">Voir les plans</a>' : ''}
+          </div>
+          <button onclick="this.parentElement.parentElement.remove()" class="text-red-300 hover:text-red-100 ml-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+
+      // Animation d'apparition
+      animateElement(limitAlert, [
+        { opacity: 0, transform: 'translateX(100%)' },
+        { opacity: 1, transform: 'translateX(0%)' }
+      ], {
+        duration: 300
+      });
+
+      // Auto-suppression après 10 secondes
+      setTimeout(() => {
+        if (limitAlert && limitAlert.parentElement) {
+          animateElement(limitAlert, [
+            { opacity: 1, transform: 'translateX(0%)' },
+            { opacity: 0, transform: 'translateX(100%)' }
+          ], {
+            duration: 300,
+            complete: () => {
+              limitAlert?.remove();
+            }
+          });
+        }
+      }, 10000);
+
+      // Désactiver le formulaire si limite atteinte
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('bg-gray-600', 'text-gray-300', 'cursor-not-allowed', 'opacity-50');
+        submitBtn.classList.remove('bg-gradient-to-r', 'from-purple-600', 'via-pink-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:via-pink-700', 'hover:to-indigo-700', 'transform', 'hover:scale-105');
+        
+        const buttonText = submitBtn.querySelector('span');
+        if (buttonText) {
+          buttonText.innerHTML = 'Limite atteinte 🚫';
+        }
+      }
+    }
+
     // Fonction pour sauvegarder les valeurs par défaut
     function saveDefaults() {
       try {
@@ -967,9 +1411,21 @@
     function resetForm() {
       form.reset();
       
-      // Masquer le QR code et afficher le placeholder
+      // Masquer le QR code et afficher la prévisualisation
       qrContainer.classList.add('hidden');
-      placeholder.classList.remove('hidden');
+      const qrPreview = document.getElementById('qr-preview');
+      if (qrPreview) {
+        qrPreview.classList.remove('hidden');
+      }
+      
+      // Remettre les couleurs par défaut
+      if (qrColorInput) qrColorInput.value = '#000000';
+      if (bgColorInput) bgColorInput.value = '#FFFFFF';
+      if (transparentBgInput) transparentBgInput.checked = false;
+      
+      // Mettre à jour la prévisualisation avec les valeurs par défaut
+      updateQRPreview();
+      updateColorPreview();
       
       // Animation de reset
       animateElement(form, [
@@ -1097,6 +1553,96 @@ ${communication || ''}`;
       }
     }
 
+    // Fonction pour générer un QR code factice en SVG
+    function generateFakeQRCode(color: string = '#000000'): string {
+      // Pattern de QR code factice (21x21 modules comme un vrai QR code version 1)
+      const pattern = [
+        '111111101011001111111',
+        '100000101110101000001',
+        '101110101010101011101',
+        '101110100111101011101',
+        '101110101101101011101',
+        '100000101001101000001',
+        '111111101010101111111',
+        '000000001110100000000',
+        '110101111001011010110',
+        '001011001101110100011',
+        '110100110010001011010',
+        '101010001111010101101',
+        '010001110100101010010',
+        '000000001011001101011',
+        '111111101100110111001',
+        '100000101010001000110',
+        '101110101101110101011',
+        '101110100011001011100',
+        '101110101110110100101',
+        '100000101001011101010',
+        '111111101010101111111'
+      ];
+      
+      const moduleSize = 11; // Taille de chaque module en pixels
+      const totalSize = pattern.length * moduleSize;
+      
+      let svg = `<svg width="${totalSize}" height="${totalSize}" viewBox="0 0 ${totalSize} ${totalSize}" xmlns="http://www.w3.org/2000/svg">`;
+      
+      // Générer les modules du QR code
+      for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+          if (pattern[row][col] === '1') {
+            const x = col * moduleSize;
+            const y = row * moduleSize;
+            svg += `<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}" fill="${color}" />`;
+          }
+        }
+      }
+      
+      svg += '</svg>';
+      return svg;
+    }
+
+    // Fonction pour mettre à jour la prévisualisation du QR code
+    function updateQRPreview() {
+      const qrColor = qrColorInput?.value || '#000000';
+      const isTransparent = transparentBgInput?.checked || false;
+      const bgColor = isTransparent ? 'transparent' : (bgColorInput?.value || '#FFFFFF');
+      
+      const previewContainer = document.getElementById('preview-qr-container');
+      const previewQRCode = document.getElementById('preview-qr-code');
+      const previewColorInfo = document.getElementById('preview-color-info');
+      const previewBgInfo = document.getElementById('preview-bg-info');
+      
+      if (previewContainer && previewQRCode && previewColorInfo && previewBgInfo) {
+        // Mettre à jour le fond du container
+        if (isTransparent) {
+          // Motif damier pour fond transparent
+          previewContainer.style.backgroundColor = 'transparent';
+          previewContainer.style.backgroundImage = 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)';
+          previewContainer.style.backgroundSize = '12px 12px';
+          previewContainer.style.backgroundPosition = '0 0, 0 6px, 6px -6px, -6px 0px';
+          previewBgInfo.textContent = 'Transparent';
+        } else {
+          previewContainer.style.backgroundColor = bgColor;
+          previewContainer.style.backgroundImage = 'none';
+          previewBgInfo.textContent = bgColor;
+        }
+        
+        // Générer et afficher le QR code factice
+        const fakeQRSvg = generateFakeQRCode(qrColor);
+        previewQRCode.innerHTML = fakeQRSvg;
+        
+        // Mettre à jour les informations de couleur
+        previewColorInfo.textContent = qrColor;
+        
+        // Animation de mise à jour
+        animateElement(previewQRCode, [
+          { transform: 'scale(0.95)', opacity: 0.7 },
+          { transform: 'scale(1)', opacity: 1 }
+        ], {
+          duration: 200
+        });
+      }
+    }
+
     // Fonction pour mettre à jour l'aperçu des couleurs
     function updateColorPreview() {
       const qrColor = qrColorInput?.value || '#000000';
@@ -1117,6 +1663,9 @@ ${communication || ''}`;
           previewBgColor.textContent = bgColor;
         }
       }
+      
+      // Mettre à jour la prévisualisation du QR code
+      updateQRPreview();
       
       // Mettre à jour l'affichage du QR code si il est visible
       updateQRCodeDisplay();
@@ -1165,6 +1714,19 @@ ${communication || ''}`;
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       console.log('Formulaire soumis'); // Debug
+      
+      // Vérifier si l'utilisateur peut créer des QR codes
+      if (!canCreateQR) {
+        alert('Vous avez atteint votre limite de QR codes pour ce mois-ci.');
+        return;
+      }
+
+      // Afficher la confirmation avant génération
+      const shouldProceed = await showGenerationConfirmation();
+      if (!shouldProceed) {
+        console.log('Génération annulée par l\'utilisateur');
+        return;
+      }
       
       // Animation du bouton de soumission
       const submitBtn = form.querySelector('button[type="submit"]') as HTMLElement;
@@ -1277,26 +1839,29 @@ ${communication || ''}`;
         // Génération du QR code via API
         const qrCodeUrl = await generateQRCodeWithColors(qrData, 300);
         
-        // Animation de disparition du placeholder
-        animateElement(placeholder, [
-          { opacity: 1, transform: 'scale(1)' },
-          { opacity: 0, transform: 'scale(0.8)' }
-        ], {
-          duration: 300,
-          complete: () => {
-            placeholder.classList.add('hidden');
-            qrContainer.classList.remove('hidden');
-            
-            // Animation d'apparition du QR container
-            animateElement(qrContainer, [
-              { opacity: 0, transform: 'scale(0.8)' },
-              { opacity: 1, transform: 'scale(1)' }
-            ], {
-              duration: 500,
-              easing: 'ease-out'
-            });
-          }
-        });
+        // Animation de disparition de la prévisualisation
+        const qrPreview = document.getElementById('qr-preview');
+        if (qrPreview) {
+          animateElement(qrPreview, [
+            { opacity: 1, transform: 'scale(1)' },
+            { opacity: 0, transform: 'scale(0.8)' }
+          ], {
+            duration: 300,
+            complete: () => {
+              qrPreview.classList.add('hidden');
+              qrContainer.classList.remove('hidden');
+              
+              // Animation d'apparition du QR container
+              animateElement(qrContainer, [
+                { opacity: 0, transform: 'scale(0.8)' },
+                { opacity: 1, transform: 'scale(1)' }
+              ], {
+                duration: 500,
+                easing: 'ease-out'
+              });
+            }
+          });
+        }
         
         // Affichage du QR code
         qrImage.src = qrCodeUrl;
@@ -1350,6 +1915,69 @@ ${communication || ''}`;
 
         // Ajouter à l'historique
         addToHistory(iban, amount, communication, beneficiary);
+
+        // Incrémenter le compteur d'utilisation dans la base de données
+        await incrementQRUsage();
+
+        // Sauvegarder le QR code dans la base de données
+        try {
+          const isTransparent = transparentBgInput?.checked || false;
+          const response = await fetch('/api/save-qr-code', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              iban: ibanClean,
+              amount,
+              communication: communication || null,
+              beneficiary: beneficiary || null,
+              qrData: qrData,
+              customColors: {
+                bg_color: isTransparent ? '#FFFFFF' : bgColorInput.value || '#FFFFFF',
+                qr_color: qrColorInput.value || '#000000',
+                transparent: isTransparent
+              }
+            }),
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            console.log('QR code sauvegardé dans la base de données:', result.qrCodeId);
+            // Stocker l'ID du QR code pour le téléchargement
+            if (qrContainer) {
+              qrContainer.setAttribute('data-qr-id', result.qrCodeId);
+            }
+          } else {
+            console.error('Erreur lors de la sauvegarde du QR code:', result.message);
+          }
+        } catch (saveError) {
+          console.error('Erreur lors de la sauvegarde du QR code:', saveError);
+        }
+
+        // Mettre à jour le header avec les nouvelles statistiques
+        if (typeof (window as any).updateHeaderStats === 'function') {
+          try {
+            // Récupérer les nouvelles statistiques
+            const response = await fetch('/api/get-user-stats', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ userId: (window as any).currentUserId }),
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              if (result.success && result.data) {
+                (window as any).updateHeaderStats(result.data);
+                console.log('✅ Header mis à jour après génération QR');
+              }
+            }
+          } catch (error) {
+            console.error('❌ Erreur lors de la mise à jour du header:', error);
+          }
+        }
 
       } catch (error) {
         console.error('Erreur lors de la génération du QR code:', error);
@@ -1412,30 +2040,59 @@ ${communication || ''}`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('Téléchargement direct (data URL) réussi');
+            
+            // Incrémenter le compteur de téléchargements dans la base de données
+            const qrCodeId = qrContainer.getAttribute('data-qr-id');
+            if (qrCodeId) {
+              try {
+                await fetch('/api/increment-download-count', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ qrCodeId }),
+                });
+              } catch (error) {
+                console.error('Erreur lors de l\'incrémentation du compteur:', error);
+              }
+            }
           } else {
-            // Si c'est une URL externe, fetch puis téléchargement
-            const response = await fetch(customQrCodeUrl);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Nettoyer l'URL temporaire
-            window.URL.revokeObjectURL(url);
-            console.log('Téléchargement via fetch réussi');
+            // Autrement (URL externe), utiliser fetch puis blob
+            fetch(customQrCodeUrl)
+              .then(response => response.blob())
+              .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                // Incrémenter le compteur de téléchargements dans la base de données
+                const qrCodeId = qrContainer.getAttribute('data-qr-id');
+                if (qrCodeId) {
+                  fetch('/api/increment-download-count', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ qrCodeId }),
+                  }).catch(error => {
+                    console.error('Erreur lors de l\'incrémentation du compteur:', error);
+                  });
+                }
+              })
+              .catch(error => {
+                console.error('Erreur lors du téléchargement:', error);
+                alert('Erreur lors du téléchargement du QR code');
+              });
           }
-          
-          console.log('Téléchargement du QR code avec couleurs personnalisées terminé');
         }
       } catch (error) {
         console.error('Erreur lors du téléchargement:', error);
-        alert('Erreur lors du téléchargement du QR code. Veuillez réessayer.');
+        alert('Erreur lors du téléchargement du QR code');
       }
     });
 

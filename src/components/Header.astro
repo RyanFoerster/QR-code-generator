@@ -1,0 +1,422 @@
+---
+import { supabase } from "../lib/supabase";
+
+// Vérifier si l'utilisateur est connecté
+const accessToken = Astro.cookies.get("sb-access-token");
+let user = null;
+let userStats = null;
+
+if (accessToken) {
+  const { data: { user: authUser } } = await supabase.auth.getUser(accessToken.value);
+  user = authUser;
+  
+  if (user) {
+    // Récupérer les statistiques utilisateur avec la nouvelle vue
+    const { data: stats } = await supabase
+      .from("user_stats")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    userStats = stats;
+  }
+}
+
+// Calculer la date de renouvellement pour l'affichage
+let renewalDate = '';
+if (userStats?.subscription_current_period_end) {
+  renewalDate = new Date(userStats.subscription_current_period_end).toLocaleDateString('fr-FR');
+}
+---
+
+<header class="bg-gray-800/50 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <!-- Logo et navigation -->
+      <div class="flex items-center">
+        <a href="/dashboard" class="flex items-center">
+          <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+            </svg>
+          </div>
+          <span class="ml-3 text-xl font-bold text-white">Wipay</span>
+        </a>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <!-- Informations utilisateur (desktop) -->
+        <div class="hidden lg:flex items-center space-x-4">
+          <div class="text-right">
+            <p class="text-sm font-medium text-white">{userStats?.email}</p>
+            <div class="flex items-center space-x-2">
+              <span id="plan-badge" class={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                userStats?.current_plan_type === 'credits' ? 'bg-blue-600 text-blue-100' :
+                userStats?.current_plan_type === 'premium' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' :
+                'bg-gray-600 text-gray-200'
+              }`}>
+                {userStats?.current_plan_type === 'credits' ? '💳 Crédits' :
+                 userStats?.current_plan_type === 'premium' ? '⭐ Premium' : '❌ Aucun plan'}
+              </span>
+              <span id="usage-display" class="text-xs text-gray-300" data-usage-display>
+                {userStats?.current_plan_type === 'premium' ? 
+                  `${userStats.qr_codes_used_this_month}/∞ QR` :
+                  `${userStats?.available_credits || 0} crédits`
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menu utilisateur -->
+        <div class="relative">
+          <button 
+            id="user-menu-button" 
+            class="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded-lg p-2"
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+              <span class="text-sm font-medium text-white">
+                {user?.email?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+
+          <!-- Menu déroulant -->
+          <div 
+            id="user-menu" 
+            class="absolute right-0 mt-2 w-80 bg-gray-800 rounded-xl shadow-lg border border-gray-700 hidden z-50"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby="user-menu-button"
+          >
+            <!-- En-tête du menu -->
+            <div class="px-4 py-3 border-b border-gray-700">
+              <p class="text-sm font-medium text-white">{user?.email}</p>
+              <p class="text-xs text-gray-400">Connecté</p>
+            </div>
+
+            <!-- Informations du plan -->
+            <div class="px-4 py-3 border-b border-gray-700">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-300">Plan actuel</span>
+                  <span id="menu-plan-badge" class={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                    userStats?.current_plan_type === 'credits' ? 'bg-blue-600 text-blue-100' :
+                    userStats?.current_plan_type === 'premium' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' :
+                    'bg-gray-600 text-gray-200'
+                  }`}>
+                    {userStats?.current_plan_type === 'credits' ? 'Crédits' :
+                     userStats?.current_plan_type === 'premium' ? 'Premium' : 'Aucun plan'}
+                  </span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-300">
+                    <span id="menu-usage-label">
+                      {userStats?.current_plan_type === 'premium' ? 'QR codes utilisés' : 'Crédits disponibles'}
+                    </span>
+                  </span>
+                  <span id="menu-usage-value" class="text-sm font-medium text-white">
+                    {userStats?.current_plan_type === 'premium' ? 
+                      `${userStats.qr_codes_used_this_month}/∞` :
+                      `${userStats?.available_credits || 0}`
+                    }
+                  </span>
+                </div>
+                
+                {userStats?.current_plan_type === 'premium' && renewalDate && (
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-300">Renouvellement</span>
+                    <span class="text-sm text-gray-400">{renewalDate}</span>
+                  </div>
+                )}
+
+                <!-- Barre de progression pour les crédits -->
+                <div id="credits-progress" class={userStats?.current_plan_type === 'credits' ? 'mt-2' : 'mt-2 hidden'}>
+                  <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Crédits utilisés</span>
+                    <span id="credits-ratio">{userStats?.total_credits_used || 0}/{userStats?.total_credits_purchased || 0}</span>
+                  </div>
+                  <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      id="credits-progress-bar"
+                      class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={`width: ${userStats?.total_credits_purchased > 0 ? (userStats.total_credits_used / userStats.total_credits_purchased) * 100 : 0}%`}
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- Barre de progression pour Premium (mensuel) -->
+                <div id="premium-progress" class={userStats?.current_plan_type === 'premium' ? 'mt-2' : 'mt-2 hidden'}>
+                  <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Ce mois-ci</span>
+                    <span id="premium-usage">{userStats?.qr_codes_used_this_month || 0} QR codes</span>
+                  </div>
+                  <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                      style="width: 100%"
+                    ></div>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1">Illimité</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="px-4 py-3 space-y-2">
+              <a 
+                href="/dashboard" 
+                class="flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                role="menuitem"
+              >
+                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                </svg>
+                Dashboard
+              </a>
+              
+              <a 
+                href="/history" 
+                class="flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                role="menuitem"
+              >
+                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Historique
+              </a>
+              
+              <a 
+                href="/pricing" 
+                class="flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                role="menuitem"
+              >
+                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+                Plans & Tarifs
+              </a>
+              
+              <button 
+                id="logout-btn"
+                class="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-700 rounded-lg transition-colors"
+                role="menuitem"
+              >
+                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                Se déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Script pour passer les données initiales et gérer les mises à jour -->
+<script define:vars={{ 
+  initialUserStats: userStats,
+  userId: user?.id
+}}>
+  // Stocker les données initiales globalement
+  window.userStats = initialUserStats;
+  window.currentUserId = userId;
+</script>
+
+<script>
+  // Fonction globale pour mettre à jour les statistiques du header
+  window.updateHeaderStats = function(newStats) {
+    console.log('🔄 Mise à jour des stats du header:', newStats);
+    
+    // Mettre à jour les données globales
+    window.userStats = newStats;
+    
+    // Éléments du header principal
+    const usageDisplay = document.getElementById('usage-display');
+    const planBadge = document.getElementById('plan-badge');
+    
+    // Éléments du menu déroulant
+    const menuPlanBadge = document.getElementById('menu-plan-badge');
+    const menuUsageLabel = document.getElementById('menu-usage-label');
+    const menuUsageValue = document.getElementById('menu-usage-value');
+    const creditsProgress = document.getElementById('credits-progress');
+    const premiumProgress = document.getElementById('premium-progress');
+    const creditsRatio = document.getElementById('credits-ratio');
+    const creditsProgressBar = document.getElementById('credits-progress-bar');
+    const premiumUsage = document.getElementById('premium-usage');
+    
+    if (!newStats) return;
+    
+    // Mettre à jour l'affichage principal
+    if (usageDisplay) {
+      if (newStats.current_plan_type === 'premium') {
+        usageDisplay.textContent = `${newStats.qr_codes_used_this_month}/∞ QR`;
+      } else {
+        usageDisplay.textContent = `${newStats.available_credits || 0} crédits`;
+      }
+    }
+    
+    // Mettre à jour les badges de plan
+    function updatePlanBadge(element, showFullText) {
+      if (!element) return;
+      
+      // Supprimer les anciennes classes
+      element.className = element.className.replace(/bg-\w+-\d+|from-\w+-\d+|to-\w+-\d+|text-\w+-\d+/g, '');
+      
+      if (newStats.current_plan_type === 'credits') {
+        element.className += ' bg-blue-600 text-blue-100';
+        element.textContent = showFullText ? '💳 Crédits' : 'Crédits';
+      } else if (newStats.current_plan_type === 'premium') {
+        element.className += ' bg-gradient-to-r from-purple-500 to-pink-500 text-white';
+        element.textContent = showFullText ? '⭐ Premium' : 'Premium';
+      } else {
+        element.className += ' bg-gray-600 text-gray-200';
+        element.textContent = showFullText ? '❌ Aucun plan' : 'Aucun plan';
+      }
+    }
+    
+    updatePlanBadge(planBadge, true);
+    updatePlanBadge(menuPlanBadge, false);
+    
+    // Mettre à jour le menu déroulant
+    if (menuUsageLabel) {
+      menuUsageLabel.textContent = newStats.current_plan_type === 'premium' ? 'QR codes utilisés' : 'Crédits disponibles';
+    }
+    
+    if (menuUsageValue) {
+      if (newStats.current_plan_type === 'premium') {
+        menuUsageValue.textContent = `${newStats.qr_codes_used_this_month}/∞`;
+      } else {
+        menuUsageValue.textContent = `${newStats.available_credits || 0}`;
+      }
+    }
+    
+    // Gérer les barres de progression
+    if (creditsProgress && premiumProgress) {
+      if (newStats.current_plan_type === 'credits') {
+        creditsProgress.classList.remove('hidden');
+        premiumProgress.classList.add('hidden');
+        
+        // Mettre à jour les valeurs des crédits
+        if (creditsRatio) {
+          creditsRatio.textContent = `${newStats.total_credits_used || 0}/${newStats.total_credits_purchased || 0}`;
+        }
+        
+        if (creditsProgressBar) {
+          const percentage = newStats.total_credits_purchased > 0 
+            ? (newStats.total_credits_used / newStats.total_credits_purchased) * 100 
+            : 0;
+          creditsProgressBar.style.width = `${percentage}%`;
+        }
+      } else if (newStats.current_plan_type === 'premium') {
+        creditsProgress.classList.add('hidden');
+        premiumProgress.classList.remove('hidden');
+        
+        // Mettre à jour l'usage Premium
+        if (premiumUsage) {
+          premiumUsage.textContent = `${newStats.qr_codes_used_this_month || 0} QR codes`;
+        }
+      } else {
+        creditsProgress.classList.add('hidden');
+        premiumProgress.classList.add('hidden');
+      }
+    }
+    
+    console.log('✅ Header mis à jour avec succès');
+  };
+
+  // Gestion du menu utilisateur
+  document.addEventListener('DOMContentLoaded', () => {
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenu = document.getElementById('user-menu');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // Toggle du menu
+    userMenuButton?.addEventListener('click', () => {
+      const isHidden = userMenu?.classList.contains('hidden');
+      if (isHidden) {
+        userMenu?.classList.remove('hidden');
+        userMenuButton.setAttribute('aria-expanded', 'true');
+      } else {
+        userMenu?.classList.add('hidden');
+        userMenuButton.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Fermer le menu en cliquant ailleurs
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!userMenuButton?.contains(target) && !userMenu?.contains(target)) {
+        userMenu?.classList.add('hidden');
+        userMenuButton?.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Gestion de la déconnexion
+    logoutBtn?.addEventListener('click', async () => {
+      try {
+        console.log('🔄 Tentative de déconnexion...');
+        
+        const response = await fetch('/api/auth/signout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('📡 Réponse de déconnexion:', response.status, response.statusText);
+
+        if (response.ok) {
+          console.log('✅ Déconnexion réussie, redirection...');
+          window.location.href = '/';
+        } else {
+          console.error('❌ Erreur lors de la déconnexion:', response.status);
+          // Fallback: redirection même en cas d'erreur
+          window.location.href = '/';
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors de la déconnexion:', error);
+        // Fallback: redirection même en cas d'erreur
+        window.location.href = '/';
+      }
+    });
+  });
+</script>
+
+<style>
+  /* Animations et effets */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(20px);
+  }
+  
+  /* Animation pour le menu */
+  #user-menu {
+    animation: slideDown 0.2s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Hover effects */
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid rgb(139, 92, 246);
+    outline-offset: 2px;
+  }
+</style> 

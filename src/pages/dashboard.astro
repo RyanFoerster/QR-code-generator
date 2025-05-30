@@ -1,0 +1,74 @@
+---
+import QRPaymentGenerator from '../components/QRPaymentGenerator.astro';
+import Layout from '../layouts/Layout.astro';
+import { supabase, getUserWithStats } from '../lib/supabase';
+
+// Vérifier l'authentification
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect("/auth/signin");
+}
+
+// Vérifier la validité du token
+const { data: { user }, error } = await supabase.auth.getUser(accessToken.value);
+
+if (error || !user) {
+  // Token invalide, supprimer les cookies et rediriger
+  Astro.cookies.delete("sb-access-token");
+  Astro.cookies.delete("sb-refresh-token");
+  return Astro.redirect("/auth/signin");
+}
+
+// Récupérer les statistiques utilisateur avec la nouvelle structure
+let userStats;
+try {
+  userStats = await getUserWithStats(user.id);
+} catch (error) {
+  console.error("Erreur lors de la récupération des stats:", error);
+  
+  // Si le profil n'existe pas, il sera créé automatiquement par le trigger
+  // On peut essayer de récupérer à nouveau après un délai
+  if ((error as any)?.code === 'PGRST116') {
+    console.log("Profil non trouvé, attente de la création automatique...");
+    
+    // Attendre un peu que le trigger crée le profil
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    try {
+      userStats = await getUserWithStats(user.id);
+    } catch (retryError) {
+      console.error("Erreur lors de la récupération après retry:", retryError);
+      // Déconnecter l'utilisateur et rediriger
+      Astro.cookies.delete("sb-access-token");
+      Astro.cookies.delete("sb-refresh-token");
+      return Astro.redirect("/auth/signin");
+    }
+  } else {
+    // Autre erreur, déconnecter et rediriger
+    Astro.cookies.delete("sb-access-token");
+    Astro.cookies.delete("sb-refresh-token");
+    return Astro.redirect("/auth/signin");
+  }
+}
+
+if (!userStats) {
+  console.error("Impossible de récupérer les statistiques utilisateur");
+  Astro.cookies.delete("sb-access-token");
+  Astro.cookies.delete("sb-refresh-token");
+  return Astro.redirect("/auth/signin");
+}
+
+// Ajouter l'utilisateur au contexte pour le composant QR
+Astro.locals.user = {
+  ...user,
+  id: user.id,
+  email: user.email || ''
+};
+Astro.locals.userProfile = userStats;
+---
+
+<Layout title="Dashboard - Wipay">
+  <QRPaymentGenerator />
+</Layout> 

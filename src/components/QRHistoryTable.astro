@@ -1,0 +1,380 @@
+---
+// QRHistoryTable.astro - Composant pour afficher l'historique des QR codes
+---
+
+<div class="bg-gray-800/50 backdrop-blur-xl rounded-xl border border-gray-700/50 overflow-hidden">
+  <div class="p-5 border-b border-gray-700/50">
+    <h2 class="text-xl font-semibold text-white">Historique de vos QR codes</h2>
+    <p class="text-gray-400 text-sm mt-1">Retrouvez tous les QR codes que vous avez générés</p>
+  </div>
+
+  <div class="p-5" id="qr-history-container">
+    <!-- État de chargement -->
+    <div id="loading-state" class="py-10 text-center">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+      <p class="text-gray-400">Chargement de l'historique...</p>
+    </div>
+
+    <!-- État vide -->
+    <div id="empty-state" class="py-10 text-center hidden">
+      <div class="bg-gray-700/30 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-gray-300 mb-2">Aucun QR code trouvé</h3>
+      <p class="text-gray-400 max-w-md mx-auto">
+        Vous n'avez pas encore généré de QR code. Générez votre premier QR code maintenant pour qu'il apparaisse ici.
+      </p>
+    </div>
+
+    <!-- Tableau d'historique -->
+    <div id="history-table" class="hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead>
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Bénéficiaire</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">IBAN</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Montant</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Communication</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Téléchargements</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body" class="divide-y divide-gray-700 text-sm">
+            <!-- Contenu généré par JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- État d'erreur -->
+    <div id="error-state" class="py-10 text-center hidden">
+      <div class="bg-red-900/30 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-red-300 mb-2">Erreur de chargement</h3>
+      <p class="text-gray-400 max-w-md mx-auto" id="error-message">
+        Une erreur est survenue lors du chargement de l'historique. Veuillez réessayer.
+      </p>
+      <button id="retry-button" class="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors">
+        Réessayer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fonction pour charger l'historique des QR codes
+  async function loadQRHistory() {
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    const historyTable = document.getElementById('history-table');
+    const errorState = document.getElementById('error-state');
+    const historyTableBody = document.getElementById('history-table-body');
+    const errorMessage = document.getElementById('error-message');
+
+    // Afficher l'état de chargement
+    loadingState.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    historyTable.classList.add('hidden');
+    errorState.classList.add('hidden');
+
+    try {
+      // Appel API pour récupérer l'historique
+      const response = await fetch('/api/get-qr-history');
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Cacher l'état de chargement
+      loadingState.classList.add('hidden');
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Erreur lors du chargement des données');
+      }
+      
+      // Vérifier si l'historique est vide
+      if (!data.data || data.data.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      
+      // Afficher le tableau d'historique
+      historyTable.classList.remove('hidden');
+      
+      // Générer les lignes du tableau
+      historyTableBody.innerHTML = data.data.map(qr => `
+        <tr class="hover:bg-gray-700/30 transition-colors">
+          <td class="px-4 py-3 text-gray-300">${qr.formatted_date}</td>
+          <td class="px-4 py-3 text-gray-300">${qr.beneficiary || '-'}</td>
+          <td class="px-4 py-3 text-gray-300">${formatIBAN(qr.iban)}</td>
+          <td class="px-4 py-3 text-gray-300 font-medium">${qr.formatted_amount}</td>
+          <td class="px-4 py-3 text-gray-300">${qr.communication || '-'}</td>
+          <td class="px-4 py-3 text-gray-300">${qr.download_count || 0}</td>
+          <td class="px-4 py-3 text-gray-300">
+            <button 
+              class="text-green-400 hover:text-green-300 transition-colors"
+              data-qr-id="${qr.id}"
+              data-qr-action="download"
+              data-qr-iban="${qr.iban}"
+              data-qr-amount="${qr.amount}"
+              data-qr-communication="${qr.communication || ''}"
+              data-qr-beneficiary="${qr.beneficiary || ''}"
+              data-qr-colors='${JSON.stringify(qr.custom_colors)}'
+            >
+              <span class="sr-only">Télécharger</span>
+              📥 Télécharger
+            </button>
+          </td>
+        </tr>
+      `).join('');
+      
+      // Ajouter les gestionnaires d'événements pour les boutons
+      addEventListeners();
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'historique:', error);
+      
+      // Afficher l'état d'erreur
+      loadingState.classList.add('hidden');
+      errorState.classList.remove('hidden');
+      
+      if (errorMessage) {
+        errorMessage.textContent = error.message || 'Une erreur est survenue lors du chargement de l\'historique';
+      }
+    }
+  }
+
+  // Fonction pour formater l'IBAN
+  function formatIBAN(iban) {
+    if (!iban) return '-';
+    
+    // Ajouter des espaces tous les 4 caractères pour la lisibilité
+    return iban.replace(/(.{4})/g, '$1 ').trim();
+  }
+
+  // Fonction pour ajouter les gestionnaires d'événements
+  function addEventListeners() {
+    // Boutons de téléchargement
+    document.querySelectorAll('[data-qr-action="download"]').forEach(button => {
+      button.addEventListener('click', async (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const qrId = target.getAttribute('data-qr-id');
+        const iban = target.getAttribute('data-qr-iban');
+        const amount = target.getAttribute('data-qr-amount');
+        const communication = target.getAttribute('data-qr-communication');
+        const beneficiary = target.getAttribute('data-qr-beneficiary');
+        const colorsStr = target.getAttribute('data-qr-colors');
+        let colors = { bg_color: "#FFFFFF", qr_color: "#000000", transparent: false };
+        
+        try {
+          if (colorsStr) {
+            colors = JSON.parse(colorsStr);
+          }
+        } catch (error) {
+          console.error("Erreur lors du parsing des couleurs:", error);
+        }
+        
+        // Créer le contenu du QR code
+        const ibanClean = iban ? iban.replace(/\s/g, '') : '';
+        const qrData = `BCD
+002
+1
+SCT
+
+${beneficiary || ''}
+${ibanClean}
+EUR${amount || '0.00'}
+
+
+${communication || ''}`;
+
+        // Afficher un indicateur de chargement
+        const originalText = target.innerHTML;
+        target.innerHTML = '⏳ Chargement...';
+        target.classList.add('opacity-50');
+        (target as HTMLButtonElement).disabled = true;
+        
+        try {
+          // Générer le QR code
+          const qrColor = colors.qr_color.replace('#', '');
+          // Toujours générer avec un fond blanc d'abord, on le rendra transparent après si nécessaire
+          const encodedText = encodeURIComponent(qrData);
+          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedText}&format=png&margin=10&color=${qrColor}&bgcolor=FFFFFF`;
+          
+          // Télécharger le QR code
+          const response = await fetch(qrUrl);
+          const blob = await response.blob();
+          
+          // Si transparent, traiter l'image
+          let finalUrl;
+          if (colors.transparent) {
+            try {
+              // Créer une URL pour l'image téléchargée
+              const imageUrl = URL.createObjectURL(blob);
+              // Rendre le fond transparent
+              finalUrl = await createTransparentQRCode(imageUrl, colors.qr_color);
+            } catch (transparencyError) {
+              console.error('Erreur lors de la création du fond transparent:', transparencyError);
+              // Fallback à l'image non-transparente
+              finalUrl = URL.createObjectURL(blob);
+            }
+          } else {
+            finalUrl = URL.createObjectURL(blob);
+          }
+          
+          // Créer un élément <a> pour télécharger
+          const link = document.createElement('a');
+          link.href = finalUrl;
+          link.download = `qr-payment-${amount}EUR-${colors.transparent ? 'transparent' : 'colored'}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Nettoyer les URL créées
+          URL.revokeObjectURL(finalUrl);
+          
+          // Incrémenter le compteur de téléchargements
+          if (qrId) {
+            try {
+              await fetch('/api/increment-download-count', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ qrCodeId: qrId }),
+              });
+              
+              // Incrémenter le compteur dans l'interface
+              const downloadCountCell = target.closest('tr')?.querySelector('td:nth-child(6)');
+              if (downloadCountCell) {
+                const currentCount = parseInt(downloadCountCell.textContent || '0');
+                downloadCountCell.textContent = (currentCount + 1).toString();
+              }
+            } catch (error) {
+              console.error('Erreur lors de l\'incrémentation du compteur:', error);
+            }
+          }
+          
+          // Réinitialiser le bouton
+          target.innerHTML = '✅ Téléchargé';
+          target.classList.remove('opacity-50');
+          
+          // Remettre le texte d'origine après un délai
+          setTimeout(() => {
+            target.innerHTML = originalText;
+            (target as HTMLButtonElement).disabled = false;
+          }, 2000);
+          
+        } catch (error) {
+          console.error('Erreur lors du téléchargement:', error);
+          target.innerHTML = '❌ Erreur';
+          target.classList.remove('opacity-50');
+          
+          // Remettre le texte d'origine après un délai
+          setTimeout(() => {
+            target.innerHTML = originalText;
+            (target as HTMLButtonElement).disabled = false;
+          }, 2000);
+        }
+      });
+    });
+
+    // Bouton de réessai
+    const retryButton = document.getElementById('retry-button');
+    if (retryButton) {
+      retryButton.addEventListener('click', () => {
+        loadQRHistory();
+      });
+    }
+  }
+
+  // Fonction pour convertir hex en RGB
+  function hexToRgb(hex: string): {r: number, g: number, b: number} | null {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+  
+  // Fonction pour créer un QR code avec fond transparent en traitant l'image
+  async function createTransparentQRCode(imageUrl: string, qrColor: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject('Impossible de créer le contexte canvas');
+          return;
+        }
+        
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Dessiner l'image sur le canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Obtenir les données de l'image
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Convertir la couleur hex en RGB
+        const targetColor = hexToRgb(qrColor);
+        if (!targetColor) {
+          reject('Couleur invalide');
+          return;
+        }
+        
+        // Traiter chaque pixel
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          
+          // Si le pixel est blanc ou très clair (fond), le rendre transparent
+          if (r > 240 && g > 240 && b > 240) {
+            data[i + 3] = 0; // Alpha = 0 (transparent)
+          } else if (r < 50 && g < 50 && b < 50) {
+            // Si le pixel est noir (QR code), le remplacer par la couleur choisie
+            data[i] = targetColor.r;     // Rouge
+            data[i + 1] = targetColor.g; // Vert
+            data[i + 2] = targetColor.b; // Bleu
+            data[i + 3] = 255;           // Alpha = 255 (opaque)
+          }
+        }
+        
+        // Remettre les données modifiées sur le canvas
+        ctx.putImageData(imageData, 0, 0);
+        
+        // Convertir en URL de données
+        const transparentDataUrl = canvas.toDataURL('image/png');
+        resolve(transparentDataUrl);
+      };
+      
+      img.onerror = () => {
+        reject('Erreur lors du chargement de l\'image');
+      };
+      
+      img.src = imageUrl;
+    });
+  }
+
+  // Charger l'historique au chargement de la page
+  document.addEventListener('DOMContentLoaded', () => {
+    loadQRHistory();
+  });
+</script> 
