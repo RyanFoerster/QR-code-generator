@@ -2,13 +2,22 @@ version: "3"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+    image: dimagin/wipay-frontend:latest
     restart: unless-stopped
     # Vous pouvez ajouter des variables d'environnement si nécessaire
     # environment:
     #   - NODE_ENV=production
     #   - AUTRE_VARIABLE=valeur
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wipay-frontend.rule=Host(`wipay.be`)"
+      - "traefik.http.routers.wipay-frontend.entrypoints=websecure"
+      - "traefik.http.routers.wipay-frontend.tls=true"
+      - "traefik.http.routers.wipay-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.wipay-frontend.service=wipay-frontend"
+      - "traefik.http.services.wipay-frontend.loadbalancer.server.port=8080"
+networks:
+  traefik-network:
+    external: true

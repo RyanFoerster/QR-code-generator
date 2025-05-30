@@ -28,6 +28,32 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          tags: ${{ secrets.DOCKER_USERNAME }}/sonar-front:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/wipay-frontend:latest
           push: true
           platforms: linux/amd64
+
+  deploy:
+    needs: build-and-push-docker-image
+    runs-on: ubuntu-latest
+    name: Deploy to VPS
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Instanciate app container
+        uses: appleboy/ssh-action@master
+        with:
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          host: ${{ secrets.SSH_HOST }}
+          script: |
+            bash -c "
+              mkdir -p wipay
+              cd wipay
+
+              curl -H 'Authorization: token ${{ github.token }}' -o docker-compose.yml https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ github.ref }}/docker-compose.yml
+
+              docker compose pull
+              docker compose down
+              docker compose up -d
+            "
