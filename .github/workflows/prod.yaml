@@ -30,7 +30,7 @@ jobs:
           file: Dockerfile
           tags: ${{ secrets.DOCKER_USERNAME }}/wipay-frontend:latest
           push: true
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
 
   deploy:
     needs: build-and-push-docker-image
@@ -56,4 +56,5 @@ jobs:
               docker compose pull
               docker compose down
               docker compose up -d
+              docker system prune -f
             "
