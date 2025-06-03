@@ -17,6 +17,9 @@ services:
       - "traefik.http.services.wipay-frontend.loadbalancer.server.port=8080"
     env_file:
       - .env
+    environment:
+      - PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL}
+      - PUBLIC_SUPABASE_ANON_KEY=${PUBLIC_SUPABASE_ANON_KEY}
 
 networks:
   traefik-network:
