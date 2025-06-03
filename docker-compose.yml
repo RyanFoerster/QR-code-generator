@@ -1,23 +1,23 @@
-version: "3"
-
 services:
   app:
     image: dimagin/wipay-frontend:latest
     restart: unless-stopped
-    # Vous pouvez ajouter des variables d'environnement si nécessaire
-    # environment:
-    #   - NODE_ENV=production
-    #   - AUTRE_VARIABLE=valeur
+    container_name: wipay-frontend
+    ports:
+      - "8080:8080"
     networks:
       - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wipay-frontend.rule=Host(`wipay.be`)"
+      - "traefik.http.routers.wipay-frontend.rule=Host(`wipay.be`) || Host(`wipay.dimagin.studio`)"
       - "traefik.http.routers.wipay-frontend.entrypoints=websecure"
       - "traefik.http.routers.wipay-frontend.tls=true"
       - "traefik.http.routers.wipay-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.wipay-frontend.service=wipay-frontend"
       - "traefik.http.services.wipay-frontend.loadbalancer.server.port=8080"
+    env_file:
+      - .env
+
 networks:
   traefik-network:
     external: true
