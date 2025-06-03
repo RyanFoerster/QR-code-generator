@@ -22,6 +22,12 @@ RUN pnpm install
 # Copier le reste des fichiers
 COPY . .
 
+ARG SUPABASE_URL
+ARG SUPABASE_ANON_KEY
+
+ENV SUPABASE_URL=${SUPABASE_URL}
+ENV SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+
 # Construire l'application
 RUN pnpm run build
 
