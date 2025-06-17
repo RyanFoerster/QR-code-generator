@@ -11,7 +11,7 @@ export default defineConfig({
   }),
   server: {
     host: "0.0.0.0", // Écoute sur toutes les interfaces
-    port: 8080, // Port exposé dans le Dockerfile
+    port: process.env.NODE_ENV === "production" ? 8080 : 4321, // Port exposé dans le Dockerfile
   },
   vite: {
     plugins: [tailwindcss()],
