@@ -1,14 +1,8 @@
 ---
-// Page d'accueil - Redirection vers la page de connexion
-import { supabase } from "../lib/supabase";
-
-// Vérifier si l'utilisateur est déjà connecté
-const accessToken = Astro.cookies.get("sb-access-token");
-if (accessToken) {
-  // Si connecté, rediriger vers le dashboard
-  return Astro.redirect("/dashboard");
-} else {
-  // Si non connecté, rediriger vers la page de connexion
-  return Astro.redirect("/auth/signin");
-}
+import QRPaymentGenerator from "../components/QRPaymentGenerator.astro";
+import Layout from "../layouts/Layout.astro";
 ---
+
+<Layout>
+  <QRPaymentGenerator />
+</Layout>
