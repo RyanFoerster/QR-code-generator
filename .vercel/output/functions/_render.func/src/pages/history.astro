@@ -1,0 +1,830 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout>
+  <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Header avec navigation -->
+    <div
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8"
+    >
+      <div class="mb-4 sm:mb-0">
+        <h1
+          class="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent mb-2"
+        >
+          📚 Historique des QR Codes
+        </h1>
+        <p class="text-lg text-gray-300">
+          Consultez et gérez vos QR codes générés
+        </p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105"
+        >
+          <span>🏠</span>
+          <span>Retour au générateur</span>
+        </a>
+
+        <button
+          id="clear-all-history"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-semibold hover:from-red-700 hover:to-rose-700 transition-all duration-300 transform hover:scale-105"
+        >
+          <span>🗑️</span>
+          <span>Vider l'historique</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div
+        class="bg-gradient-to-br from-blue-900/50 to-indigo-900/50 backdrop-blur-xl p-6 rounded-2xl border border-blue-500/30"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-blue-300 text-sm font-medium">Total QR Codes</p>
+            <p id="total-count" class="text-2xl font-bold text-white">0</p>
+          </div>
+          <div
+            class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center"
+          >
+            <span class="text-2xl">📊</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-gradient-to-br from-green-900/50 to-emerald-900/50 backdrop-blur-xl p-6 rounded-2xl border border-green-500/30"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-green-300 text-sm font-medium">Montant Total</p>
+            <p id="total-amount" class="text-2xl font-bold text-white">0€</p>
+          </div>
+          <div
+            class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center"
+          >
+            <span class="text-2xl">💰</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-xl p-6 rounded-2xl border border-purple-500/30"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-300 text-sm font-medium">Ce Mois</p>
+            <p id="monthly-count" class="text-2xl font-bold text-white">0</p>
+          </div>
+          <div
+            class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center"
+          >
+            <span class="text-2xl">📅</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div
+      class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl p-6 rounded-2xl border border-gray-700/50 mb-8"
+    >
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Recherche -->
+        <div>
+          <label
+            for="search-input"
+            class="block text-sm font-semibold text-gray-300 mb-2"
+          >
+            🔍 Rechercher
+          </label>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="IBAN, montant, communication..."
+            class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
+
+        <!-- Filtre par montant -->
+        <div>
+          <label
+            for="amount-filter"
+            class="block text-sm font-semibold text-gray-300 mb-2"
+          >
+            💰 Montant
+          </label>
+          <select
+            id="amount-filter"
+            class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+          >
+            <option value="">Tous les montants</option>
+            <option value="0-50">0€ - 50€</option>
+            <option value="50-100">50€ - 100€</option>
+            <option value="100-500">100€ - 500€</option>
+            <option value="500+">500€+</option>
+          </select>
+        </div>
+
+        <!-- Filtre par date -->
+        <div>
+          <label
+            for="date-filter"
+            class="block text-sm font-semibold text-gray-300 mb-2"
+          >
+            📅 Période
+          </label>
+          <select
+            id="date-filter"
+            class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+          >
+            <option value="">Toutes les dates</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+            <option value="year">Cette année</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="flex flex-wrap gap-3 mt-4">
+        <button
+          id="export-history"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+        >
+          <span>📤</span>
+          <span>Exporter</span>
+        </button>
+
+        <button
+          id="import-history"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300"
+        >
+          <span>📥</span>
+          <span>Importer</span>
+        </button>
+
+        <button
+          id="refresh-history"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300"
+        >
+          <span>🔄</span>
+          <span>Actualiser</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Liste des QR codes -->
+    <div
+      class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl border border-gray-700/50 overflow-hidden"
+    >
+      <!-- Header du tableau -->
+      <div
+        class="bg-gradient-to-r from-gray-700/50 to-gray-800/50 px-6 py-4 border-b border-gray-600/50"
+      >
+        <div
+          class="grid grid-cols-1 md:grid-cols-6 gap-4 text-sm font-semibold text-gray-300"
+        >
+          <div class="flex items-center gap-2">
+            <span>📱</span>
+            <span>QR Code</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span>🏦</span>
+            <span>IBAN</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span>💰</span>
+            <span>Montant</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span>💬</span>
+            <span>Communication</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span>👤</span>
+            <span>Bénéficiaire</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span>📅</span>
+            <span>Date</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenu du tableau -->
+      <div id="history-list" class="divide-y divide-gray-700/50">
+        <!-- Les éléments seront ajoutés dynamiquement -->
+      </div>
+
+      <!-- Message vide -->
+      <div id="empty-state" class="hidden text-center py-12">
+        <div
+          class="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full mx-auto mb-6 flex items-center justify-center"
+        >
+          <span class="text-4xl">📚</span>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-400 mb-2">
+          Aucun QR code dans l'historique
+        </h3>
+        <p class="text-gray-500 mb-6">
+          Générez votre premier QR code pour le voir apparaître ici
+        </p>
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300"
+        >
+          <span>✨</span>
+          <span>Générer un QR code</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="hidden mt-8 flex justify-center">
+      <div class="flex items-center gap-2">
+        <button
+          id="prev-page"
+          class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          ← Précédent
+        </button>
+        <span id="page-info" class="px-4 py-2 text-gray-300"></span>
+        <button
+          id="next-page"
+          class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Suivant →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input caché pour l'import -->
+  <input type="file" id="import-file-input" accept=".json" class="hidden" />
+</Layout>
+
+<script>
+  // Variables globales
+  let allHistory: any[] = [];
+  let filteredHistory: any[] = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
+  // Éléments DOM
+  const historyList = document.getElementById("history-list") as HTMLElement;
+  const emptyState = document.getElementById("empty-state") as HTMLElement;
+  const totalCount = document.getElementById("total-count") as HTMLElement;
+  const totalAmount = document.getElementById("total-amount") as HTMLElement;
+  const monthlyCount = document.getElementById("monthly-count") as HTMLElement;
+  const searchInput = document.getElementById(
+    "search-input"
+  ) as HTMLInputElement;
+  const amountFilter = document.getElementById(
+    "amount-filter"
+  ) as HTMLSelectElement;
+  const dateFilter = document.getElementById(
+    "date-filter"
+  ) as HTMLSelectElement;
+  const clearAllHistory = document.getElementById(
+    "clear-all-history"
+  ) as HTMLButtonElement;
+  const exportHistory = document.getElementById(
+    "export-history"
+  ) as HTMLButtonElement;
+  const importHistory = document.getElementById(
+    "import-history"
+  ) as HTMLButtonElement;
+  const importFileInput = document.getElementById(
+    "import-file-input"
+  ) as HTMLInputElement;
+  const refreshHistory = document.getElementById(
+    "refresh-history"
+  ) as HTMLButtonElement;
+  const pagination = document.getElementById("pagination") as HTMLElement;
+  const prevPage = document.getElementById("prev-page") as HTMLButtonElement;
+  const nextPage = document.getElementById("next-page") as HTMLButtonElement;
+  const pageInfo = document.getElementById("page-info") as HTMLElement;
+
+  // Initialisation
+  document.addEventListener("DOMContentLoaded", () => {
+    loadHistory();
+    setupEventListeners();
+  });
+
+  // Charger l'historique depuis localStorage
+  function loadHistory() {
+    try {
+      const historyData = localStorage.getItem("qr-payment-history");
+      allHistory = historyData ? JSON.parse(historyData) : [];
+      allHistory.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      filteredHistory = [...allHistory];
+      updateStatistics();
+      renderHistory();
+      updatePagination();
+    } catch (error) {
+      console.error("Erreur lors du chargement de l'historique:", error);
+      allHistory = [];
+      filteredHistory = [];
+    }
+  }
+
+  // Configurer les écouteurs d'événements
+  function setupEventListeners() {
+    // Recherche
+    searchInput?.addEventListener("input", () => {
+      applyFilters();
+    });
+
+    // Filtres
+    amountFilter?.addEventListener("change", () => {
+      applyFilters();
+    });
+
+    dateFilter?.addEventListener("change", () => {
+      applyFilters();
+    });
+
+    // Actions
+    clearAllHistory?.addEventListener("click", () => {
+      if (
+        confirm(
+          "Êtes-vous sûr de vouloir vider tout l'historique ? Cette action est irréversible."
+        )
+      ) {
+        localStorage.removeItem("qr-payment-history");
+        loadHistory();
+      }
+    });
+
+    exportHistory?.addEventListener("click", () => {
+      exportHistoryToFile();
+    });
+
+    importHistory?.addEventListener("click", () => {
+      importFileInput?.click();
+    });
+
+    importFileInput?.addEventListener("change", (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        importHistoryFromFile(file);
+      }
+    });
+
+    refreshHistory?.addEventListener("click", () => {
+      loadHistory();
+    });
+
+    // Pagination
+    prevPage?.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderHistory();
+        updatePagination();
+      }
+    });
+
+    nextPage?.addEventListener("click", () => {
+      const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderHistory();
+        updatePagination();
+      }
+    });
+  }
+
+  // Appliquer les filtres
+  function applyFilters() {
+    const searchTerm = searchInput?.value.toLowerCase() || "";
+    const amountRange = amountFilter?.value || "";
+    const dateRange = dateFilter?.value || "";
+
+    filteredHistory = allHistory.filter((item) => {
+      // Recherche textuelle
+      const matchesSearch =
+        !searchTerm ||
+        item.iban.toLowerCase().includes(searchTerm) ||
+        item.amount.includes(searchTerm) ||
+        item.communication.toLowerCase().includes(searchTerm) ||
+        item.beneficiary.toLowerCase().includes(searchTerm);
+
+      // Filtre par montant
+      const amount = parseFloat(item.amount);
+      let matchesAmount = true;
+      if (amountRange) {
+        switch (amountRange) {
+          case "0-50":
+            matchesAmount = amount >= 0 && amount <= 50;
+            break;
+          case "50-100":
+            matchesAmount = amount > 50 && amount <= 100;
+            break;
+          case "100-500":
+            matchesAmount = amount > 100 && amount <= 500;
+            break;
+          case "500+":
+            matchesAmount = amount > 500;
+            break;
+        }
+      }
+
+      // Filtre par date
+      let matchesDate = true;
+      if (dateRange) {
+        const itemDate = new Date(item.date);
+        const now = new Date();
+
+        switch (dateRange) {
+          case "today":
+            matchesDate = itemDate.toDateString() === now.toDateString();
+            break;
+          case "week":
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            matchesDate = itemDate >= weekAgo;
+            break;
+          case "month":
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            matchesDate = itemDate >= monthAgo;
+            break;
+          case "year":
+            const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            matchesDate = itemDate >= yearAgo;
+            break;
+        }
+      }
+
+      return matchesSearch && matchesAmount && matchesDate;
+    });
+
+    currentPage = 1;
+    renderHistory();
+    updatePagination();
+  }
+
+  // Rendre l'historique
+  function renderHistory() {
+    if (!historyList) return;
+
+    if (filteredHistory.length === 0) {
+      historyList.innerHTML = "";
+      emptyState?.classList.remove("hidden");
+      return;
+    }
+
+    emptyState?.classList.add("hidden");
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageHistory = filteredHistory.slice(startIndex, endIndex);
+
+    historyList.innerHTML = pageHistory
+      .map(
+        (item, index) => `
+      <div class="p-6 hover:bg-gray-700/30 transition-colors group">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+          <!-- QR Code -->
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center">
+              <span class="text-xl">📱</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <button 
+                onclick="regenerateQR(${startIndex + index})"
+                class="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                🔄 Régénérer
+              </button>
+              <button 
+                onclick="downloadQR(${startIndex + index})"
+                class="text-xs text-green-400 hover:text-green-300 transition-colors"
+              >
+                📥 Télécharger
+              </button>
+            </div>
+          </div>
+          
+          <!-- IBAN -->
+          <div class="font-mono text-sm text-gray-300 break-all">
+            ${item.iban}
+          </div>
+          
+          <!-- Montant -->
+          <div class="text-lg font-bold text-green-400">
+            ${item.amount}€
+          </div>
+          
+          <!-- Communication -->
+          <div class="text-sm text-gray-300 break-words">
+            ${item.communication || "-"}
+          </div>
+          
+          <!-- Bénéficiaire -->
+          <div class="text-sm text-gray-300 break-words">
+            ${item.beneficiary || "-"}
+          </div>
+          
+          <!-- Date -->
+          <div class="text-sm text-gray-400">
+            ${new Date(item.date).toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="mt-4 flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onclick="useQR(${startIndex + index})"
+            class="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            📋 Utiliser
+          </button>
+          <button 
+            onclick="duplicateQR(${startIndex + index})"
+            class="px-3 py-1 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            📋 Dupliquer
+          </button>
+          <button 
+            onclick="deleteQR(${startIndex + index})"
+            class="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+          >
+            🗑️ Supprimer
+          </button>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  // Mettre à jour les statistiques
+  function updateStatistics() {
+    if (totalCount) {
+      totalCount.textContent = allHistory.length.toString();
+    }
+
+    if (totalAmount) {
+      const total = allHistory.reduce(
+        (sum, item) => sum + parseFloat(item.amount || 0),
+        0
+      );
+      totalAmount.textContent = `${total.toFixed(2)}€`;
+    }
+
+    if (monthlyCount) {
+      const now = new Date();
+      const thisMonth = allHistory.filter((item) => {
+        const itemDate = new Date(item.date);
+        return (
+          itemDate.getMonth() === now.getMonth() &&
+          itemDate.getFullYear() === now.getFullYear()
+        );
+      }).length;
+      monthlyCount.textContent = thisMonth.toString();
+    }
+  }
+
+  // Mettre à jour la pagination
+  function updatePagination() {
+    if (!pagination) return;
+
+    const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+
+    if (totalPages <= 1) {
+      pagination.classList.add("hidden");
+      return;
+    }
+
+    pagination.classList.remove("hidden");
+
+    if (prevPage) {
+      prevPage.disabled = currentPage === 1;
+    }
+
+    if (nextPage) {
+      nextPage.disabled = currentPage === totalPages;
+    }
+
+    if (pageInfo) {
+      pageInfo.textContent = `Page ${currentPage} sur ${totalPages}`;
+    }
+  }
+
+  // Exporter l'historique
+  function exportHistoryToFile() {
+    try {
+      const dataStr = JSON.stringify(allHistory, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `qr-history-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erreur lors de l'export:", error);
+      alert("Erreur lors de l'export de l'historique");
+    }
+  }
+
+  // Importer l'historique
+  function importHistoryFromFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target?.result as string);
+
+        if (Array.isArray(importedData)) {
+          const existingHistory = JSON.parse(
+            localStorage.getItem("qr-payment-history") || "[]"
+          );
+          const mergedHistory = [...existingHistory, ...importedData];
+
+          // Éviter les doublons
+          const uniqueHistory = mergedHistory.filter(
+            (item, index, self) =>
+              index ===
+              self.findIndex(
+                (t) =>
+                  t.iban === item.iban &&
+                  t.amount === item.amount &&
+                  t.communication === item.communication &&
+                  t.date === item.date
+              )
+          );
+
+          localStorage.setItem(
+            "qr-payment-history",
+            JSON.stringify(uniqueHistory)
+          );
+          loadHistory();
+          alert("Historique importé avec succès !");
+        } else {
+          alert("Format de fichier invalide");
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'import:", error);
+        alert("Erreur lors de l'import de l'historique");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Fonctions globales pour les boutons d'action
+  (window as any).useQR = (index: number) => {
+    const item = filteredHistory[index];
+    if (item) {
+      // Rediriger vers la page principale avec les données pré-remplies
+      const params = new URLSearchParams({
+        iban: item.iban,
+        amount: item.amount,
+        communication: item.communication || "",
+        beneficiary: item.beneficiary || "",
+      });
+      window.location.href = `/?${params.toString()}`;
+    }
+  };
+
+  (window as any).duplicateQR = (index: number) => {
+    const item = filteredHistory[index];
+    if (item) {
+      const newItem = {
+        ...item,
+        date: new Date().toISOString(),
+      };
+
+      const existingHistory = JSON.parse(
+        localStorage.getItem("qr-payment-history") || "[]"
+      );
+      existingHistory.unshift(newItem);
+      localStorage.setItem(
+        "qr-payment-history",
+        JSON.stringify(existingHistory)
+      );
+      loadHistory();
+    }
+  };
+
+  (window as any).deleteQR = (index: number) => {
+    const item = filteredHistory[index];
+    if (item && confirm("Êtes-vous sûr de vouloir supprimer ce QR code ?")) {
+      const existingHistory = JSON.parse(
+        localStorage.getItem("qr-payment-history") || "[]"
+      );
+      const updatedHistory = existingHistory.filter((h: any) => h !== item);
+      localStorage.setItem(
+        "qr-payment-history",
+        JSON.stringify(updatedHistory)
+      );
+      loadHistory();
+    }
+  };
+
+  (window as any).regenerateQR = (index: number) => {
+    const item = filteredHistory[index];
+    if (item) {
+      // Rediriger vers la page principale pour régénérer
+      useQR(index);
+    }
+  };
+
+  (window as any).downloadQR = (index: number) => {
+    const item = filteredHistory[index];
+    if (item) {
+      // Créer les données QR et télécharger
+      const ibanClean = item.iban.replace(/\s/g, "");
+      const qrData = `BCD
+002
+1
+SCT
+
+${item.beneficiary || ""}
+${ibanClean}
+EUR${item.amount}
+
+
+${item.communication || ""}`;
+
+      const encodedText = encodeURIComponent(qrData);
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodedText}&format=png&margin=10`;
+
+      const link = document.createElement("a");
+      link.href = qrUrl;
+      link.download = `qr-${item.amount}EUR-${new Date().toISOString().slice(0, 10)}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+</script>
+
+<style>
+  /* Animations personnalisées */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  /* Responsive grid */
+  @media (max-width: 768px) {
+    .grid-cols-1.md\\:grid-cols-6 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Hover effects */
+  .group:hover .group-hover\\:opacity-100 {
+    opacity: 1;
+  }
+
+  /* Scrollbar personnalisée */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(55, 65, 81, 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      to bottom,
+      rgb(139, 92, 246),
+      rgb(219, 39, 119)
+    );
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, rgb(124, 58, 237), rgb(190, 24, 93));
+  }
+</style>
