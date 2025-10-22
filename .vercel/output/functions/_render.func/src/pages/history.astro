@@ -413,13 +413,13 @@ import Layout from "../layouts/Layout.astro";
       // Recherche textuelle
       const matchesSearch =
         !searchTerm ||
-        item.iban.toLowerCase().includes(searchTerm) ||
-        item.amount.includes(searchTerm) ||
-        item.communication.toLowerCase().includes(searchTerm) ||
-        item.beneficiary.toLowerCase().includes(searchTerm);
+        (item.iban && item.iban.toLowerCase().includes(searchTerm)) ||
+        (item.amount && item.amount.includes(searchTerm)) ||
+        (item.communication && item.communication.toLowerCase().includes(searchTerm)) ||
+        (item.beneficiary && item.beneficiary.toLowerCase().includes(searchTerm));
 
       // Filtre par montant
-      const amount = parseFloat(item.amount);
+      const amount = parseFloat(item.amount || "0");
       let matchesAmount = true;
       if (amountRange) {
         switch (amountRange) {
@@ -440,7 +440,7 @@ import Layout from "../layouts/Layout.astro";
 
       // Filtre par date
       let matchesDate = true;
-      if (dateRange) {
+      if (dateRange && item.date) {
         const itemDate = new Date(item.date);
         const now = new Date();
 
@@ -533,16 +533,16 @@ import Layout from "../layouts/Layout.astro";
             ${item.beneficiary || "-"}
           </div>
           
-          <!-- Date -->
-          <div class="text-sm text-gray-400">
-            ${new Date(item.date).toLocaleDateString("fr-FR", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div>
+            <!-- Date -->
+            <div class="text-sm text-gray-400">
+              ${item.date ? new Date(item.date).toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }) : "Date inconnue"}
+            </div>
         </div>
         
         <!-- Actions -->
@@ -580,7 +580,7 @@ import Layout from "../layouts/Layout.astro";
 
     if (totalAmount) {
       const total = allHistory.reduce(
-        (sum, item) => sum + parseFloat(item.amount || 0),
+        (sum, item) => sum + parseFloat(item.amount || "0"),
         0
       );
       totalAmount.textContent = `${total.toFixed(2)}€`;
@@ -589,6 +589,7 @@ import Layout from "../layouts/Layout.astro";
     if (monthlyCount) {
       const now = new Date();
       const thisMonth = allHistory.filter((item) => {
+        if (!item.date) return false;
         const itemDate = new Date(item.date);
         return (
           itemDate.getMonth() === now.getMonth() &&
@@ -748,7 +749,7 @@ import Layout from "../layouts/Layout.astro";
 
   (window as any).downloadQR = (index: number) => {
     const item = filteredHistory[index];
-    if (item) {
+    if (item && item.iban && item.amount) {
       // Créer les données QR et télécharger
       const ibanClean = item.iban.replace(/\s/g, "");
       const qrData = `BCD
