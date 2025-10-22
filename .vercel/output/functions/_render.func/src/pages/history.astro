@@ -415,8 +415,10 @@ import Layout from "../layouts/Layout.astro";
         !searchTerm ||
         (item.iban && item.iban.toLowerCase().includes(searchTerm)) ||
         (item.amount && item.amount.includes(searchTerm)) ||
-        (item.communication && item.communication.toLowerCase().includes(searchTerm)) ||
-        (item.beneficiary && item.beneficiary.toLowerCase().includes(searchTerm));
+        (item.communication &&
+          item.communication.toLowerCase().includes(searchTerm)) ||
+        (item.beneficiary &&
+          item.beneficiary.toLowerCase().includes(searchTerm));
 
       // Filtre par montant
       const amount = parseFloat(item.amount || "0");
@@ -535,13 +537,17 @@ import Layout from "../layouts/Layout.astro";
           
             <!-- Date -->
             <div class="text-sm text-gray-400">
-              ${item.date ? new Date(item.date).toLocaleDateString("fr-FR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              }) : "Date inconnue"}
+              ${
+                item.date
+                  ? new Date(item.date).toLocaleDateString("fr-FR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "Date inconnue"
+              }
             </div>
         </div>
         
